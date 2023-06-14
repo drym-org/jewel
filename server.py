@@ -3,7 +3,7 @@ import Pyro5.api
 import os
 import base64
 from models import Metadata
-from hashlib import sha1
+from checksum import compute_checksum
 
 
 DISK = 'disk/server'
@@ -15,9 +15,8 @@ class Peer:
         m = Metadata(**metadata)
         with open(os.path.join(DISK, m.filename), 'wb') as f:
             decoded = base64.decodebytes(bytes(contents['data'], 'utf-8'))
-            checksum = sha1()
-            checksum.update(decoded)
-            assert checksum.hexdigest() == m.checksum
+            checksum = compute_checksum(decoded)
+            assert checksum == m.checksum
             return f"Hello! I've saved {m.filename}.\n"
 
 
