@@ -5,7 +5,7 @@ from models import BlockMetadata
 from checksum import compute_checksum
 
 
-DISK = 'disk/client'
+DISK = 'disk'
 
 
 def make_metadata(filename):

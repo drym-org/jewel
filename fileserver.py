@@ -4,7 +4,7 @@ from models import BlockMetadata
 from names import unique_name
 
 
-DISK = 'disk/server'
+DISK = 'disk'
 NAMESPACE = 'jewel.fileserver'
 
 

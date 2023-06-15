@@ -7,7 +7,7 @@ from checksum import compute_checksum
 from names import unique_name
 
 
-DISK = 'disk/peer'
+DISK = 'disk'
 # every node on the network needs to have a distinct name
 # so we define namespaces and derive the final name by
 # appending the name of the current directory
