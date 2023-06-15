@@ -1,17 +1,16 @@
 # Installation
 
-This proof-of-concept uses Pyro5 to model a P2P filesharing network, and GNU Parallel to simplify running the various network components concurrently.
+This proof-of-concept uses Pyro5 to model a P2P filesharing network, and regular shell scripts to manage the various network components concurrently.
 
 ``` shell
 $ pip install Pyro5
-$ brew install parallel
 ```
 
 # How to use
 
 ``` shell
-$ ./run.sh      # start nameserver and fileserver
-$ ./client.py   # start client
+$ ./run.sh          # start nameserver, fileserver and peers
+$ ./run-client.sh   # start client
 ```
 
 ## Looking at things

@@ -1,12 +1,10 @@
-# start nameserver
-# start file server
-# TODO: start peers
+#!/usr/bin/env bash
 
 echo "Starting nameserver and file server..."
 echo ""
 
-parallel -u ::: 'pyro5-ns' \
-                './fileserver.py' \
+(trap 'kill 0' SIGINT; pyro5-ns & cd live/fileserver && ./fileserver.py & cd live/peer && ./peer.py & wait)
+# TODO: separate peer initialization
 
 echo ""
 echo "Bye."
