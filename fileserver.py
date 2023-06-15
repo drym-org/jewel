@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import Pyro5.api
+from Pyro5.errors import CommunicationError
 from models import BlockMetadata
 from names import unique_name
 
@@ -18,15 +19,16 @@ class FileServer:
         ns = Pyro5.api.locate_ns()
         peers = ns.yplookup({"peer"}, return_metadata=False)
         live_peers = []
-        print(peers)
-        for _, uid in peers.items():
+        for name, uid in peers.items():
             with Pyro5.api.Proxy(uid) as peer:
                 # ping each of them
-                if peer.ping():
-                    live_peers.append(uid)
+                try:
+                    peer.ping()
+                except CommunicationError:
+                    ns.remove(name)
                 else:
-                    # TODO: remove unresponsive peer from the nameserver
-                    pass
+                    live_peers.append(uid)
+        print(live_peers)
         return live_peers
 
 
