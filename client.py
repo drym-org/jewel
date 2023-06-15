@@ -8,11 +8,14 @@ from checksum import compute_checksum
 DISK = 'disk'
 
 
-def make_metadata(filename):
+def make_metadata(filename, contents):
+    checksum = compute_checksum(contents)
+    return BlockMetadata(checksum, name=filename)
+
+
+def file_contents(filename):
     with open(os.path.join(DISK, filename), 'rb') as f:
-        contents = f.read()
-        checksum = compute_checksum(contents)
-        return BlockMetadata(checksum, name=filename)
+        return f.read()
 
 
 def discover(metadata: BlockMetadata):
@@ -25,9 +28,13 @@ def discover(metadata: BlockMetadata):
 
 
 def store_file(filename):
-    metadata = make_metadata(filename)
+    contents = file_contents(filename)
+    metadata = make_metadata(filename, contents)
     peers = discover(metadata)
-    print(peers)
+    chosen_peer = peers[0]
+    with Pyro5.api.Proxy(chosen_peer) as peer:
+        result = peer.store(metadata.__dict__, contents)
+        print(result)
 
 
 def main():

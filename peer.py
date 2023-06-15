@@ -14,6 +14,11 @@ DISK = 'disk'
 NAMESPACE = 'jewel.peer'
 
 
+def write_file(filename, contents):
+    with open(os.path.join(DISK, filename), 'wb') as f:
+        f.write(contents)
+
+
 @Pyro5.api.expose
 class Peer:
     def store(self, metadata, contents):
@@ -24,6 +29,7 @@ class Peer:
             decoded = base64.decodebytes(bytes(contents['data'], 'utf-8'))
             checksum = compute_checksum(decoded)
             assert checksum == m.checksum
+            write_file(m.name, decoded)
             return f"Hello! I've saved {m.name}.\n"
 
     def ping(self):

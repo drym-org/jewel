@@ -21,10 +21,13 @@ class FileServer:
         print(peers)
         for _, uid in peers.items():
             with Pyro5.api.Proxy(uid) as peer:
+                # ping each of them
                 if peer.ping():
                     live_peers.append(uid)
-        # ping each of them
-        return f"Hello! I've received your request to store {m.name}. The following peers are live: {live_peers}\n"
+                else:
+                    # TODO: remove unresponsive peer from the nameserver
+                    pass
+        return live_peers
 
 
 def main():
