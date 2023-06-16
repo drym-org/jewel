@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# NOTE: this expects to be run from the repo root folder
+# e.g. as ./scripts/init-peers.sh
+# and the paths here are relative to that root
+
+mkdir -p live/fileserver/disk
+
+cp fileserver.py live/fileserver
+cp models.py live/fileserver
+cp names.py live/fileserver
+cp checksum.py live/fileserver
