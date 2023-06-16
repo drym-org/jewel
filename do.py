@@ -5,25 +5,26 @@ from networking import discover_peers
 from sys import exit
 
 
-def dir():
-    """ List files on a selected peer. """
+def _show_peer_menu():
     peers = discover_peers()
     peers = list(peers.keys())
     menu = TerminalMenu(peers, title="Which peer?")
     peer_index = menu.show()
     peer_name = peers[peer_index]
+    return peer_name
+
+
+def dir():
+    """ List files on a selected peer. """
+    peer_name = _show_peer_menu()
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
         print(peer.dir())
 
 
 def store_file():
     """ Have a peer request to store a file. """
-    peers = discover_peers()
-    peers = list(peers.keys())
-    menu = TerminalMenu(peers, title="Which peer?")
-    peer_index = menu.show()
+    peer_name = _show_peer_menu()
     filename = input("What file would you like to store? ").strip()
-    peer_name = peers[peer_index]
     print(f"OK. {peer_name} is requesting to store {filename} ...\n")
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
         peer.make_request(filename)
@@ -31,11 +32,7 @@ def store_file():
 
 def delete_file():
     """ Ask a peer to delete a file. """
-    peers = discover_peers()
-    peers = list(peers.keys())
-    menu = TerminalMenu(peers, title="Which peer?")
-    peer_index = menu.show()
-    peer_name = peers[peer_index]
+    peer_name = _show_peer_menu()
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
         files = peer.dir()
         menu = TerminalMenu(files, title="Which file?")

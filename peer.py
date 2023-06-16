@@ -57,15 +57,16 @@ class Peer:
         return os.listdir(DISK)
 
     def store(self, metadata, contents):
+        """ Store a file on this peer (note that this method is called by
+        _another_ peer when that peer wants to store the file here)."""
         m = BlockMetadata(**metadata)
         if not m.name:
             m.name = m.checksum
-        with open(os.path.join(DISK, m.name), 'wb') as f:
-            decoded = base64.decodebytes(bytes(contents['data'], 'utf-8'))
-            checksum = compute_checksum(decoded)
-            assert checksum == m.checksum
-            write_file(m.name, decoded)
-            log(f"Hello! I've saved {m.name}.\n")
+        decoded = base64.decodebytes(bytes(contents['data'], 'utf-8'))
+        checksum = compute_checksum(decoded)
+        assert checksum == m.checksum
+        write_file(m.name, decoded)
+        log(f"Hello! I've saved {m.name}.\n")
 
     def delete(self, filename):
         try:
@@ -76,6 +77,8 @@ class Peer:
             log(f"{filename} deleted!")
 
     def make_request(self, filename):
+        """ 'Request' is ambiguous, but here we're talking about making a
+        request to store a file on the network. """
         try:
             contents = file_contents(filename)
         except FileNotFoundError:
