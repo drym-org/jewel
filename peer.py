@@ -50,6 +50,12 @@ def request(metadata: BlockMetadata):
 
 @Pyro5.api.expose
 class Peer:
+    def ping(self):
+        return True
+
+    def dir(self):
+        return os.listdir(DISK)
+
     def store(self, metadata, contents):
         m = BlockMetadata(**metadata)
         if not m.name:
@@ -61,16 +67,25 @@ class Peer:
             write_file(m.name, decoded)
             log(f"Hello! I've saved {m.name}.\n")
 
-    def ping(self):
-        return True
+    def delete(self, filename):
+        try:
+            os.remove(os.path.join(DISK, filename))
+        except FileNotFoundError:
+            log(f"{filename} not found!")
+        else:
+            log(f"{filename} deleted!")
 
     def make_request(self, filename):
-        contents = file_contents(filename)
-        metadata = make_metadata(filename, contents)
-        peers = request(metadata)
-        chosen_peer = peers[0]
-        with Pyro5.api.Proxy(chosen_peer) as peer:
-            peer.store(metadata.__dict__, contents)
+        try:
+            contents = file_contents(filename)
+        except FileNotFoundError:
+            log(f"{filename} not found!")
+        else:
+            metadata = make_metadata(filename, contents)
+            peers = request(metadata)
+            chosen_peer = peers[0]
+            with Pyro5.api.Proxy(chosen_peer) as peer:
+                peer.store(metadata.__dict__, contents)
 
 
 def main():
