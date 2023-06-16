@@ -6,20 +6,21 @@
 
 # TODO: different files on different peers
 
-mkdir -p live/peer/disk
-cp peer.py live/peer
-cp models.py live/peer
-cp names.py live/peer
-cp checksum.py live/peer
-cp networking.py live/peer
-cp log.py live/peer
+# Number of peers to spin up
+N=$1
 
-cp disk/a.txt live/peer/disk
+if [ "$N" -gt 0 ]; then
+  # Spin up the peers
+  for i in $(seq 1 $N); do
+    ./scripts/init-peer.sh $i
+  done
+else
+  echo "Error: The number of peers must be a positive integer."
+fi
 
-mkdir -p live/peer2/disk
-cp peer.py live/peer2
-cp models.py live/peer2
-cp names.py live/peer2
-cp checksum.py live/peer2
-cp networking.py live/peer2
-cp log.py live/peer2
+# Set up some initial files on the peers
+# Note that we assume here that at least some peers exist.
+# For now, it's safe to assume that at least two peers exist.
+# It would be useful to have a separate script to distribute
+# files across the peers, based on the actual peer configuration.
+cp disk/a.txt live/1/disk
