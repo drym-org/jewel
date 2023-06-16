@@ -14,6 +14,14 @@ def _show_peer_menu():
     return peer_name
 
 
+def _show_file_menu(peer):
+    files = peer.dir()
+    menu = TerminalMenu(files, title="Which file?")
+    file_index = menu.show()
+    filename = files[file_index]
+    return filename
+
+
 def dir():
     """ List files on a selected peer. """
     peer_name = _show_peer_menu()
@@ -24,9 +32,9 @@ def dir():
 def store_file():
     """ Have a peer request to store a file. """
     peer_name = _show_peer_menu()
-    filename = input("What file would you like to store? ").strip()
-    print(f"OK. {peer_name} is requesting to store {filename} ...\n")
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
+        filename = _show_file_menu(peer)
+        print(f"OK. {peer_name} is requesting to store {filename} ...\n")
         peer.request_to_store(filename)
 
 
@@ -34,10 +42,7 @@ def delete_file():
     """ Ask a peer to delete a file. """
     peer_name = _show_peer_menu()
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
-        files = peer.dir()
-        menu = TerminalMenu(files, title="Which file?")
-        file_index = menu.show()
-        filename = files[file_index]
+        filename = _show_file_menu(peer)
         peer.delete(filename)
 
 
