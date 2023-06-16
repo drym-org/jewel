@@ -41,10 +41,26 @@ def request_to_store(metadata: BlockMetadata):
     """
     log(f"Requesting to store {metadata.name}...")
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
-        peers = server.request(metadata.__dict__)
+        peers = server.request_to_store(metadata.__dict__)
         if NAME in peers:
             del peers[NAME]
-        log(peers)
+        log(f"Peers available to host {metadata.name} are {peers}")
+        return list(peers.values())
+
+
+def request_to_get(filename):
+    """ The filename here could be any "block" name. When we add sharding, a
+    shard would have a name (its SHA1 hash, by default), and we would pass that
+    here to retrieve that shard just like any other file.
+    """
+    log(f"Requesting to get {filename}...")
+    with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
+        peers = server.request_to_get(filename)
+        # since we're checking whether we have the file before asking the
+        # server, we don't need to check again here that we aren't in the
+        # returned list of peers hosting this file (as we do in
+        # request_to_store)
+        log(f"Peers hosting {filename} are {peers}")
         return list(peers.values())
 
 
@@ -55,6 +71,10 @@ class Peer:
 
     def dir(self):
         return os.listdir(DISK)
+
+    def has_file(self, filename):
+        files = self.dir()
+        return (filename in files)
 
     def store(self, metadata, contents):
         """ Store a file on this peer (note that this method is called by
@@ -68,6 +88,14 @@ class Peer:
         write_file(m.name, decoded)
         log(f"Hello! I've saved {m.name}.\n")
 
+    def retrieve(self, filename):
+        try:
+            contents = file_contents(filename)
+        except FileNotFoundError:
+            log(f"{filename} not found!")
+        else:
+            return contents
+
     def delete(self, filename):
         try:
             os.remove(os.path.join(DISK, filename))
@@ -75,6 +103,20 @@ class Peer:
             log(f"{filename} not found!")
         else:
             log(f"{filename} deleted!")
+
+    def request_to_get(self, filename):
+        if self.has_file(filename):
+            log(f"Already have {filename}!\n")
+            return
+        peers = request_to_get(filename)
+        chosen_peer = peers[0]
+        with Pyro5.api.Proxy(chosen_peer) as peer:
+            # TODO: need to also retrieve the metadata
+            # to compare the checksum
+            file_contents = peer.retrieve(filename)
+            decoded = base64.decodebytes(bytes(file_contents['data'], 'utf-8'))
+            write_file(filename, decoded)
+            log(f"{filename} received.\n")
 
     def request_to_store(self, filename):
         """ Make a request to store a file on the network. """

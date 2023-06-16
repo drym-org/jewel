@@ -46,8 +46,17 @@ def delete_file():
         peer.delete(filename)
 
 
+def get_file():
+    """ Have a peer request to get a file. """
+    peer_name = _show_peer_menu()
+    with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
+        filename = input("What file would you like to get? ").strip()
+        print(f"OK. {peer_name} is requesting to get {filename} ...\n")
+        peer.request_to_get(filename)
+
+
 def main_menu():
-    options = ["[d] dir", "[s] Store a file", "[x] Delete a file", "[q] quit"]
+    options = ["[d] dir", "[s] Store a file", "[x] Delete a file", "[g] get a file", "[q] quit"]
     menu = TerminalMenu(options, title="What would you like to do?")
     selected_index = menu.show()
     if selected_index == 0:
@@ -56,6 +65,8 @@ def main_menu():
         store_file()
     elif selected_index == 2:
         delete_file()
+    elif selected_index == 3:
+        get_file()
     else:
         exit(0)
 

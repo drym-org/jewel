@@ -16,7 +16,7 @@ log = partial(log, NAME)
 
 @Pyro5.api.expose
 class FileServer:
-    def request(self, metadata):
+    def request_to_store(self, metadata):
         m = BlockMetadata(**metadata)
         if not m.name:
             m.name = m.checksum
@@ -27,6 +27,20 @@ class FileServer:
         # or cache the result for better
         # performance, etc.
         return discover_peers(NAME)
+
+    def request_to_get(self, filename):
+        # find all peers currently hosting this file
+        peers_dict = discover_peers(NAME)
+        peers = list(peers_dict.keys())
+        hosts = []
+        for peer_name in peers:
+            with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
+                if peer.has_file(filename):
+                    hosts.append(peer_name)
+        # kind of kludgy but we're just getting the "sub-dict" of the peer dict
+        # containing only those peers that are hosting the file
+        hosts = {k: v for k, v in peers_dict.items() if k in hosts}
+        return hosts
 
 
 def main():
