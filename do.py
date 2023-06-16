@@ -3,12 +3,18 @@ import Pyro5.api
 from simple_term_menu import TerminalMenu
 from networking import discover_peers
 from sys import exit
+import re
+
+
+def _extract_number(str):
+    return re.findall(r'\d+', str)[0]
 
 
 def _show_peer_menu():
     peers = discover_peers()
     peers = list(peers.keys())
-    menu = TerminalMenu(peers, title="Which peer?")
+    peer_options = [f"[{_extract_number(p)}] {p}" for p in peers]
+    menu = TerminalMenu(peer_options, title="Which peer?")
     peer_index = menu.show()
     peer_name = peers[peer_index]
     return peer_name
