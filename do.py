@@ -27,7 +27,7 @@ def store_file():
     filename = input("What file would you like to store? ").strip()
     print(f"OK. {peer_name} is requesting to store {filename} ...\n")
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
-        peer.make_request(filename)
+        peer.request_to_store(filename)
 
 
 def delete_file():

@@ -34,7 +34,7 @@ def file_contents(filename):
         return f.read()
 
 
-def request(metadata: BlockMetadata):
+def request_to_store(metadata: BlockMetadata):
     """
     The 'handshake' phase where we submit a request to store a file to the file
     server and receive a list of live peers.
@@ -76,16 +76,15 @@ class Peer:
         else:
             log(f"{filename} deleted!")
 
-    def make_request(self, filename):
-        """ 'Request' is ambiguous, but here we're talking about making a
-        request to store a file on the network. """
+    def request_to_store(self, filename):
+        """ Make a request to store a file on the network. """
         try:
             contents = file_contents(filename)
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:
             metadata = make_metadata(filename, contents)
-            peers = request(metadata)
+            peers = request_to_store(metadata)
             chosen_peer = peers[0]
             with Pyro5.api.Proxy(chosen_peer) as peer:
                 peer.store(metadata.__dict__, contents)
