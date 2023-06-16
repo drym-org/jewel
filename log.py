@@ -1,2 +1,4 @@
 def log(name, message):
-    print(f"[{name}] {message}")
+    """ We only log when a name is provided. """
+    if name:
+        print(f"[{name}] {message}")

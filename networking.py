@@ -3,7 +3,7 @@ from Pyro5.errors import CommunicationError
 from log import log
 
 
-def discover_peers(caller_name):
+def discover_peers(caller_name=None):
     """ Query the nameserver to get a list of all known peers.
     The caller_name argument is the name of the network entity invoking this
     function. This is to facilitate clear logging.

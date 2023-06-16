@@ -1,9 +1,10 @@
 # Installation
 
-This proof-of-concept uses Pyro5 to model a P2P filesharing network, and regular shell scripts to manage the various network components concurrently.
+This proof-of-concept uses python and Pyro5 to model a P2P filesharing network, simple-term-menu to power a command-line menu-driven interface, and regular shell scripts to manage the various network components concurrently.
 
 ``` shell
 $ pip install Pyro5
+$ pip install simple-term-menu
 ```
 
 # How to use
