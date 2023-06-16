@@ -10,3 +10,5 @@ cp fileserver.py live/fileserver
 cp models.py live/fileserver
 cp names.py live/fileserver
 cp checksum.py live/fileserver
+cp networking.py live/fileserver
+cp log.py live/fileserver

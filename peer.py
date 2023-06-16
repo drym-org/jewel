@@ -5,18 +5,47 @@ import base64
 from models import BlockMetadata
 from checksum import compute_checksum
 from names import unique_name
-
+from log import log
+from functools import partial
 
 DISK = 'disk'
 # every node on the network needs to have a distinct name
 # so we define namespaces and derive the final name by
 # appending the name of the current directory
 NAMESPACE = 'jewel.peer'
+PWD = os.path.basename(os.getcwd())
+NAME = unique_name(NAMESPACE, PWD)
+
+log = partial(log, NAME)
 
 
 def write_file(filename, contents):
     with open(os.path.join(DISK, filename), 'wb') as f:
         f.write(contents)
+
+
+def make_metadata(filename, contents):
+    checksum = compute_checksum(contents)
+    return BlockMetadata(checksum, name=filename)
+
+
+def file_contents(filename):
+    with open(os.path.join(DISK, filename), 'rb') as f:
+        return f.read()
+
+
+def request(metadata: BlockMetadata):
+    """
+    The 'handshake' phase where we submit a request to store a file to the file
+    server and receive a list of live peers.
+    """
+    log(f"Requesting to store {metadata.name}...")
+    with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
+        peers = server.request(metadata.__dict__)
+        if NAME in peers:
+            del peers[NAME]
+        log(peers)
+        return list(peers.values())
 
 
 @Pyro5.api.expose
@@ -30,10 +59,18 @@ class Peer:
             checksum = compute_checksum(decoded)
             assert checksum == m.checksum
             write_file(m.name, decoded)
-            return f"Hello! I've saved {m.name}.\n"
+            log(f"Hello! I've saved {m.name}.\n")
 
     def ping(self):
         return True
+
+    def make_request(self, filename):
+        contents = file_contents(filename)
+        metadata = make_metadata(filename, contents)
+        peers = request(metadata)
+        chosen_peer = peers[0]
+        with Pyro5.api.Proxy(chosen_peer) as peer:
+            peer.store(metadata.__dict__, contents)
 
 
 def main():
@@ -42,10 +79,8 @@ def main():
     uri = daemon.register(Peer)
     # register the object with a name in the name server
     ns = Pyro5.api.locate_ns()
-    pwd = os.path.basename(os.getcwd())
-    name = unique_name(NAMESPACE, pwd)
-    ns.register(name, uri, metadata={"peer"})
-    print("Ready.")
+    ns.register(NAME, uri, metadata={"peer"})
+    log("Ready.")
     # start the event loop of the server to wait for calls
     daemon.requestLoop()
 

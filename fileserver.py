@@ -1,12 +1,17 @@
 #!/usr/bin/env python
 import Pyro5.api
-from Pyro5.errors import CommunicationError
 from models import BlockMetadata
 from names import unique_name
+from networking import discover_peers
+from log import log
+from functools import partial
 
 
 DISK = 'disk'
 NAMESPACE = 'jewel.fileserver'
+NAME = unique_name(NAMESPACE, "")  # TODO: consistency
+
+log = partial(log, NAME)
 
 
 @Pyro5.api.expose
@@ -16,20 +21,12 @@ class FileServer:
         if not m.name:
             m.name = m.checksum
         # find all registered peers
-        ns = Pyro5.api.locate_ns()
-        peers = ns.yplookup({"peer"}, return_metadata=False)
-        live_peers = []
-        for name, uid in peers.items():
-            with Pyro5.api.Proxy(uid) as peer:
-                # ping each of them
-                try:
-                    peer.ping()
-                except CommunicationError:
-                    ns.remove(name)
-                else:
-                    live_peers.append(uid)
-        print(live_peers)
-        return live_peers
+        # for now that's all this does. But
+        # we could tailor the response to the
+        # details of the request here
+        # or cache the result for better
+        # performance, etc.
+        return discover_peers(NAME)
 
 
 def main():
@@ -38,9 +35,8 @@ def main():
     uri = daemon.register(FileServer)
     # register the object with a name in the name server
     ns = Pyro5.api.locate_ns()
-    name = unique_name(NAMESPACE, "")  # TODO: consistency
-    ns.register(name, uri, metadata={"fileserver"})
-    print("Ready.")
+    ns.register(NAME, uri, metadata={"fileserver"})
+    log("Ready.")
     # start the event loop of the server to wait for calls
     daemon.requestLoop()
 
