@@ -16,7 +16,7 @@ log = partial(log, NAME)
 
 @Pyro5.api.expose
 class FileServer:
-    def request_to_store(self, metadata):
+    def peers_available_to_host(self, metadata):
         m = BlockMetadata(**metadata)
         if not m.name:
             m.name = m.checksum
@@ -28,7 +28,7 @@ class FileServer:
         # performance, etc.
         return discover_peers(NAME)
 
-    def request_to_get(self, filename):
+    def hosting_peers(self, filename):
         # find all peers currently hosting this file
         peers_dict = discover_peers(NAME)
         peers = list(peers_dict.keys())

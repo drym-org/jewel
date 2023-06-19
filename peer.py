@@ -34,32 +34,32 @@ def file_contents(filename):
         return f.read()
 
 
-def request_to_store(metadata: BlockMetadata):
+def peers_available_to_host(metadata: BlockMetadata):
     """
     The 'handshake' phase where we submit a request to store a file to the file
     server and receive a list of live peers.
     """
     log(f"Requesting to store {metadata.name}...")
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
-        peers = server.request_to_store(metadata.__dict__)
+        peers = server.peers_available_to_host(metadata.__dict__)
         if NAME in peers:
             del peers[NAME]
         log(f"Peers available to host {metadata.name} are {peers}")
         return list(peers.values())
 
 
-def request_to_get(filename):
+def hosting_peers(filename):
     """ The filename here could be any "block" name. When we add sharding, a
     shard would have a name (its SHA1 hash, by default), and we would pass that
     here to retrieve that shard just like any other file.
     """
     log(f"Requesting to get {filename}...")
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
-        peers = server.request_to_get(filename)
+        peers = server.hosting_peers(filename)
         # since we're checking whether we have the file before asking the
         # server, we don't need to check again here that we aren't in the
         # returned list of peers hosting this file (as we do in
-        # request_to_store)
+        # peers_available_to_host)
         log(f"Peers hosting {filename} are {peers}")
         return list(peers.values())
 
@@ -105,10 +105,16 @@ class Peer:
             log(f"{filename} deleted!")
 
     def request_to_get(self, filename):
+        """ Make a request to retrieve a file from the network.
+
+        This is a control method, allowing us to remotely
+        instruct this peer to perform actions, in this case,
+        to request to get a file stored on the network.
+        """
         if self.has_file(filename):
             log(f"Already have {filename}!\n")
             return
-        peers = request_to_get(filename)
+        peers = hosting_peers(filename)
         chosen_peer = peers[0]
         with Pyro5.api.Proxy(chosen_peer) as peer:
             # TODO: need to also retrieve the metadata
@@ -119,14 +125,19 @@ class Peer:
             log(f"{filename} received.\n")
 
     def request_to_store(self, filename):
-        """ Make a request to store a file on the network. """
+        """ Make a request to store a file on the network.
+
+        This is a control method, allowing us to remotely
+        instruct this peer to perform actions, in this case,
+        to request to store a file on the network.
+        """
         try:
             contents = file_contents(filename)
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:
             metadata = make_metadata(filename, contents)
-            peers = request_to_store(metadata)
+            peers = peers_available_to_host(metadata)
             chosen_peer = peers[0]
             with Pyro5.api.Proxy(chosen_peer) as peer:
                 peer.store(metadata.__dict__, contents)
