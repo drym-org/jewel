@@ -4,6 +4,14 @@ from simple_term_menu import TerminalMenu
 from networking import discover_peers
 from sys import exit
 import re
+from time import sleep
+
+
+def error(message):
+    print()
+    print(message)
+    print()
+    sleep(0.5)
 
 
 def _extract_number(str):
@@ -22,6 +30,8 @@ def _show_peer_menu():
 
 def _show_file_menu(peer):
     files = peer.dir()
+    if not files:
+        return None
     menu = TerminalMenu(files, title="Which file?")
     file_index = menu.show()
     filename = files[file_index]
@@ -40,8 +50,11 @@ def store_file():
     peer_name = _show_peer_menu()
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
         filename = _show_file_menu(peer)
-        print(f"OK. {peer_name} is requesting to store {filename} ...\n")
-        peer.request_to_store(filename)
+        if filename:
+            print(f"OK. {peer_name} is requesting to store {filename} ...\n")
+            peer.request_to_store(filename)
+        else:
+            error(f"No files present on {peer_name}!")
 
 
 def delete_file():
@@ -49,7 +62,10 @@ def delete_file():
     peer_name = _show_peer_menu()
     with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
         filename = _show_file_menu(peer)
-        peer.delete(filename)
+        if filename:
+            peer.delete(filename)
+        else:
+            error(f"No files present on {peer_name}!")
 
 
 def get_file():
