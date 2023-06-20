@@ -7,7 +7,7 @@ from .models import Block, BlockMetadata, File
 from .checksum import compute_checksum
 from .names import unique_name
 from .log import log
-from .scheme.naive import NaiveDuplication
+from .scheme import Hosting, NaiveDuplication
 from .networking import peers_available_to_host, hosting_peers
 from .file import file_contents, write_file
 
