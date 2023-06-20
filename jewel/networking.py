@@ -42,17 +42,17 @@ def peers_available_to_host(metadata: BlockMetadata, caller_name=None):
         return list(peers.values())
 
 
-def hosting_peers(filename):
+def hosting_peers(filename, caller_name=None):
     """ The filename here could be any "block" name. When we add sharding, a
     shard would have a name (its SHA1 hash, by default), and we would pass that
     here to retrieve that shard just like any other file.
     """
-    log(f"Requesting to get {filename}...")
+    log(caller_name, f"Requesting to get {filename}...")
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
         peers = server.hosting_peers(filename)
         # since we're checking whether we have the file before asking the
         # server, we don't need to check again here that we aren't in the
         # returned list of peers hosting this file (as we do in
         # peers_available_to_host)
-        log(f"Peers hosting {filename} are {peers}")
+        log(caller_name, f"Peers hosting {filename} are {peers}")
         return list(peers.values())

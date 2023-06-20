@@ -73,7 +73,7 @@ class Peer:
         if self.has_file(filename):
             log(f"Already have {filename}!\n")
             return
-        peers = hosting_peers(filename)
+        peers = hosting_peers(filename, caller_name=NAME)
         chosen_peer = peers[0]
         with Pyro5.api.Proxy(chosen_peer) as peer:
             # TODO: need to also retrieve the metadata
