@@ -1,0 +1,4 @@
+-/.eggs
+-/jewel.egg-info
+-/.pytest_cache
+-/docs/_build

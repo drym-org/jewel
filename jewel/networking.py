@@ -1,7 +1,7 @@
 import Pyro5.api
 from Pyro5.errors import CommunicationError
-from models import BlockMetadata
-from log import log
+from .models import BlockMetadata
+from .log import log
 
 
 def discover_peers(caller_name=None):

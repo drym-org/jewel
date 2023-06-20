@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import Pyro5.api
 from simple_term_menu import TerminalMenu
-from networking import discover_peers
+from .networking import discover_peers
 from sys import exit
 import re
 from time import sleep
