@@ -1,15 +1,15 @@
-from .base import StorageScheme
-from ..checksum import compute_checksum
-from ..models import Block
-from ..striping import stripe_blocks
-from ..block import make_block
-from ..metadata import make_metadata
 from collections import defaultdict
 from itertools import cycle
-from ..networking import peers_available_to_host
+from .base import ShardedStorageScheme
+from ...checksum import compute_checksum
+from ...models import Block
+from ...striping import stripe_blocks
+from ...block import make_block
+from ...metadata import make_metadata
+from ...networking import peers_available_to_host
 
 
-class ShardedDuplication(StorageScheme):
+class ShardedDuplication(ShardedStorageScheme):
 
     def __init__(self, number_of_peers):
         self.number_of_peers = number_of_peers

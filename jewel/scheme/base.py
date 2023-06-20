@@ -9,18 +9,13 @@ class StorageScheme(ABC):
         pass
 
     @abstractmethod
-    def shard(self, file) -> list:
-        """ Divide the input file into non-overlapping blocks. """
+    def introduce_redundancy(self, blocks):
+        """ Add redundancy to the blocks to facilitate error recovery. """
         pass
 
     @abstractmethod
-    def introduce_redundancy(self, shards):
-        """ Add redundancy to the shards to facilitate error recovery. """
-        pass
-
-    @abstractmethod
-    def allocate(self, shards, hosts) -> dict:
-        """ Allocate shards to hosts. """
+    def allocate(self, blocks, hosts) -> dict:
+        """ Allocate blocks to hosts. """
         pass
 
     @abstractmethod

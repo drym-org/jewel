@@ -24,10 +24,6 @@ class NaiveDuplication(StorageScheme):
     def number_of_peers(self, N):
         self._N = N
 
-    def shard(self, file) -> list:
-        """ Divide the input file into non-overlapping blocks. """
-        pass
-
     def introduce_redundancy(self, block):
         """ Add redundancy to the shards to facilitate error recovery. """
         # just repeat the block N times, where N
