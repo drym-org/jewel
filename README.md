@@ -8,6 +8,8 @@ $ make build
 
 # How to use
 
+First, ensure that you are at the root path of the cloned ``jewel`` repo.
+
 ## In one terminal window
 
 ``` shell
