@@ -2,11 +2,14 @@
 import Pyro5.api
 import os
 import base64
-from models import BlockMetadata
+from models import Block, BlockMetadata, File
 from checksum import compute_checksum
 from names import unique_name
 from log import log
 from functools import partial
+from scheme.singlehost import NaiveDuplication
+from networking import peers_available_to_host, hosting_peers
+from file import file_contents, write_file
 
 DISK = 'disk'
 # every node on the network needs to have a distinct name
@@ -16,52 +19,10 @@ NAMESPACE = 'jewel.peer'
 PWD = os.path.basename(os.getcwd())
 NAME = unique_name(NAMESPACE, PWD)
 
+CONFIG_FILE = 'config.ini'
+SCHEME = NaiveDuplication(1)  # load_peer_config(CONFIG_FILE)
+
 log = partial(log, NAME)
-
-
-def write_file(filename, contents):
-    with open(os.path.join(DISK, filename), 'wb') as f:
-        f.write(contents)
-
-
-def make_metadata(filename, contents):
-    checksum = compute_checksum(contents)
-    return BlockMetadata(checksum, name=filename)
-
-
-def file_contents(filename):
-    with open(os.path.join(DISK, filename), 'rb') as f:
-        return f.read()
-
-
-def peers_available_to_host(metadata: BlockMetadata):
-    """
-    The 'handshake' phase where we submit a request to store a file to the file
-    server and receive a list of live peers.
-    """
-    log(f"Requesting to store {metadata.name}...")
-    with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
-        peers = server.peers_available_to_host(metadata.__dict__)
-        if NAME in peers:
-            del peers[NAME]
-        log(f"Peers available to host {metadata.name} are {peers}")
-        return list(peers.values())
-
-
-def hosting_peers(filename):
-    """ The filename here could be any "block" name. When we add sharding, a
-    shard would have a name (its SHA1 hash, by default), and we would pass that
-    here to retrieve that shard just like any other file.
-    """
-    log(f"Requesting to get {filename}...")
-    with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
-        peers = server.hosting_peers(filename)
-        # since we're checking whether we have the file before asking the
-        # server, we don't need to check again here that we aren't in the
-        # returned list of peers hosting this file (as we do in
-        # peers_available_to_host)
-        log(f"Peers hosting {filename} are {peers}")
-        return list(peers.values())
 
 
 @Pyro5.api.expose
@@ -85,12 +46,12 @@ class Peer:
         decoded = base64.decodebytes(bytes(contents['data'], 'utf-8'))
         checksum = compute_checksum(decoded)
         assert checksum == m.checksum
-        write_file(m.name, decoded)
+        write_file(DISK, m.name, decoded)
         log(f"Hello! I've saved {m.name}.\n")
 
     def retrieve(self, filename):
         try:
-            contents = file_contents(filename)
+            contents = file_contents(DISK, filename)
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:
@@ -121,7 +82,7 @@ class Peer:
             # to compare the checksum
             file_contents = peer.retrieve(filename)
             decoded = base64.decodebytes(bytes(file_contents['data'], 'utf-8'))
-            write_file(filename, decoded)
+            write_file(DISK, filename, decoded)
             log(f"{filename} received.\n")
 
     def request_to_store(self, filename):
@@ -132,15 +93,12 @@ class Peer:
         to request to store a file on the network.
         """
         try:
-            contents = file_contents(filename)
+            contents = file_contents(DISK, filename)
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:
-            metadata = make_metadata(filename, contents)
-            peers = peers_available_to_host(metadata)
-            chosen_peer = peers[0]
-            with Pyro5.api.Proxy(chosen_peer) as peer:
-                peer.store(metadata.__dict__, contents)
+            file = File(filename, contents)
+            SCHEME.store(file)
 
 
 def main():
