@@ -1,15 +1,15 @@
-from .base import StorageScheme
-from ..checksum import compute_checksum
-from ..models import Block
-from ..striping import stripe_blocks
 from itertools import cycle
 from collections import defaultdict
-from ..block import make_block
-from ..metadata import make_metadata
-from ..networking import peers_available_to_host
+from .base import RedundantStorageScheme
+from ...checksum import compute_checksum
+from ...models import Block
+from ...striping import stripe_blocks
+from ...block import make_block
+from ...metadata import make_metadata
+from ...networking import peers_available_to_host
 
 
-class NaiveDuplication(StorageScheme):
+class NaiveDuplication(RedundantStorageScheme):
 
     _N = None
 
