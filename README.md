@@ -44,7 +44,11 @@ You can also ask the nameserver about live nodes on the network:
 $ pyro5-nsc list
 ```
 
-You can inspect the files stored in each peer by looking in the ``disk`` folder in each peer, e.g. ``live/peer/disk``.
+You can inspect the files stored in each peer by looking in the ``disk`` folder in each peer, e.g. ``live/peer/disk``, or simply use the ``dir`` feature in the Jewel main menu.
+
+## Debugging
+
+In addition to trace logs using using the project's ``log`` utility, adding ad hoc print statements is a reasonable way to debug things, and any such output would show up in the logging/``run`` window. I'm not sure if there is a way to use a debugger like ``pudb`` except via (currently non-existent) unit tests.
 
 # The Code
 
