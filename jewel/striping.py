@@ -1,4 +1,4 @@
-from block import store_block
+from .block import store_block
 
 
 def stripe_blocks(peer_uid, blocks):

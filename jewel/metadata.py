@@ -1,4 +1,4 @@
-from models import BlockMetadata
+from .models import BlockMetadata
 
 
 def make_metadata(block, name=None):

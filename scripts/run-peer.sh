@@ -4,4 +4,4 @@
 # e.g. as ./scripts/init-peers.sh
 # and the paths here are relative to that root
 
-cd live/$1 && ./peer.py
+cd live/$1 && jewel-start-peer

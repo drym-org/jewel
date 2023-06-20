@@ -2,14 +2,14 @@
 import Pyro5.api
 import os
 import base64
-from models import Block, BlockMetadata, File
-from checksum import compute_checksum
-from names import unique_name
-from log import log
 from functools import partial
-from scheme.singlehost import NaiveDuplication
-from networking import peers_available_to_host, hosting_peers
-from file import file_contents, write_file
+from .models import Block, BlockMetadata, File
+from .checksum import compute_checksum
+from .names import unique_name
+from .log import log
+from .scheme.naive import NaiveDuplication
+from .networking import peers_available_to_host, hosting_peers
+from .file import file_contents, write_file
 
 DISK = 'disk'
 # every node on the network needs to have a distinct name
@@ -41,13 +41,11 @@ class Peer:
         """ Store a file on this peer (note that this method is called by
         _another_ peer when that peer wants to store the file here)."""
         m = BlockMetadata(**metadata)
-        if not m.name:
-            m.name = m.checksum
         decoded = base64.decodebytes(bytes(contents['data'], 'utf-8'))
         checksum = compute_checksum(decoded)
         assert checksum == m.checksum
-        write_file(DISK, m.name, decoded)
-        log(f"Hello! I've saved {m.name}.\n")
+        write_file(DISK, m.checksum, decoded)
+        log(f"Hello! I've saved {m.checksum}.\n")
 
     def retrieve(self, filename):
         try:

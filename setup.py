@@ -33,6 +33,8 @@ setup(
     entry_points={
         'console_scripts': [
             'jewel=jewel.jewel:main',
+            'jewel-start-peer=jewel.peer:main',
+            'jewel-start-server=jewel.fileserver:main',
         ]
     },
 )

@@ -33,12 +33,12 @@ def peers_available_to_host(metadata: BlockMetadata, caller_name=None):
     The 'handshake' phase where we submit a request to store a file to the file
     server and receive a list of live peers (as UIDs).
     """
-    log(f"Requesting to store {metadata.name}...")
+    log(caller_name, f"Requesting to store {metadata.checksum}...")
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
         peers = server.peers_available_to_host(metadata.__dict__)
         if caller_name in peers:
             del peers[caller_name]
-        log(caller_name, f"Peers available to host {metadata.name} are {peers}")
+        log(caller_name, f"Peers available to host {metadata.checksum} are {peers}")
         return list(peers.values())
 
 

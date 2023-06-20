@@ -22,7 +22,7 @@ echo ""
 # Based on: https://stackoverflow.com/a/52033580
 (trap 'kill 0' SIGINT;
  pyro5-ns &
- cd live/fileserver && ./fileserver.py &
+ cd live/fileserver && jewel-start-server &
  ./scripts/run-peers.sh $1 &
  wait)
 # TODO: separate peer initialization

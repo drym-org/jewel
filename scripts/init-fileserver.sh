@@ -5,4 +5,3 @@
 # and the paths here are relative to that root
 
 mkdir -p live/fileserver/disk
-cp -R jewel live/fileserver

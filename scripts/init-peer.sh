@@ -7,4 +7,3 @@
 # TODO: different files on different peers
 
 mkdir -p live/$1/disk
-cp -R jewel live/$1

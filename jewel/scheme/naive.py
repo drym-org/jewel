@@ -11,8 +11,22 @@ from ..networking import peers_available_to_host
 
 class NaiveDuplication(StorageScheme):
 
+    _N = None
+
     def __init__(self, number_of_peers):
         self.number_of_peers = number_of_peers
+
+    @property
+    def number_of_peers(self):
+        return self._N
+
+    @number_of_peers.setter
+    def number_of_peers(self, N):
+        self._N = N
+
+    def shard(self, file) -> list:
+        """ Divide the input file into non-overlapping blocks. """
+        pass
 
     def introduce_redundancy(self, block):
         """ Add redundancy to the shards to facilitate error recovery. """
@@ -28,7 +42,7 @@ class NaiveDuplication(StorageScheme):
         for h in cycle(host_uids):
             if not blocks:
                 break
-            allocations[h] += blocks.pop()
+            allocations[h].append(blocks.pop())
         return allocations
 
     def store(self, file):

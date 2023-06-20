@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 import Pyro5.api
-from models import BlockMetadata
-from names import unique_name
-from networking import discover_peers
-from log import log
 from functools import partial
+from .models import BlockMetadata
+from .names import unique_name
+from .networking import discover_peers
+from .log import log
 
 
 DISK = 'disk'
@@ -17,9 +17,7 @@ log = partial(log, NAME)
 @Pyro5.api.expose
 class FileServer:
     def peers_available_to_host(self, metadata):
-        m = BlockMetadata(**metadata)
-        if not m.name:
-            m.name = m.checksum
+        # m = BlockMetadata(**metadata)
         # find all registered peers
         # for now that's all this does. But
         # we could tailor the response to the
