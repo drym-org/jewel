@@ -1,8 +1,11 @@
 import Pyro5.api
 import os
+import base64
 from Pyro5.errors import CommunicationError
-from .models import BlockMetadata
+from .models import BlockMetadata, Block
 from .log import log
+from .metadata import make_metadata
+from .checksum import compute_checksum
 
 
 def discover_peers():
@@ -72,3 +75,23 @@ def block_name_for_file(filename):
         else:
             log(NAME, f"{filename} has no block name.")
         return block_name
+
+
+def download(block_name, peer_uid) -> Block:
+    """ Download a block from a peer. """
+    with Pyro5.api.Proxy(peer_uid) as peer:
+        file_contents = peer.retrieve(block_name)
+        decoded = base64.decodebytes(bytes(file_contents['data'], 'utf-8'))
+        checksum = compute_checksum(decoded)
+        assert checksum == block_name
+        return Block(block_name, decoded)
+
+
+def upload(block, peer_uid, name=None):
+    """ This interface represents the "blocks" abstraction layer. It does not
+    need to know anything about the storage scheme being employed or about
+    sharding. It simply stores a "block" of data (which may happen to be a file
+    or a shard at a higher level of abstraction) on some peer."""
+    metadata = make_metadata(block, name)
+    with Pyro5.api.Proxy(peer_uid) as peer:
+        peer.store(metadata.__dict__, block.data)

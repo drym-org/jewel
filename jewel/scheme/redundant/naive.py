@@ -3,10 +3,10 @@ import base64
 from random import choice
 from .base import RedundantStorageScheme
 from ..striped import StripedStorageScheme
-from ...striping import stripe_blocks
 from ...block import make_block
 from ...metadata import make_metadata
 from ...file import write_file
+from ...networking import download
 
 
 class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
@@ -59,10 +59,7 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
         block, peer_uids = self.handshake_store(file)
         blocks = [block]
         blocks = self.introduce_redundancy(blocks)
-        peer_allocation = self.allocate(blocks, peer_uids)
-        for peer_uid in peer_allocation:
-            peer_blocks = peer_allocation[peer_uid]  # list of blocks
-            stripe_blocks(peer_uid, peer_blocks)
+        self.stripe(blocks, peer_uids)
         # TODO: store filename: root_block_checksum on FS
         # TODO: store block checksum: [block_checksum]-or-peer_uid/name
         # try to implement the block tree and file dir
@@ -76,11 +73,7 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
         # TODO: when peer metadata is added, we can select the
         # "best" peer here instead of a random peer
         chosen_peer = choice(peers)
-        with Pyro5.api.Proxy(chosen_peer) as peer:
-            # TODO: need to also retrieve the metadata
-            # to compare the checksum
-            file_contents = peer.retrieve(block_name)
-            decoded = base64.decodebytes(bytes(file_contents['data'], 'utf-8'))
-            # write it with the original filename
-            # instead of the block name
-            write_file(filename, decoded)
+        block = download(block_name, chosen_peer)
+        # write it with the original filename
+        # instead of the block name
+        write_file(filename, block.data)

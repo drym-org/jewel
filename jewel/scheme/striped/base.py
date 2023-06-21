@@ -1,5 +1,7 @@
-from ..base import StorageScheme
 from abc import abstractmethod
+from ..base import StorageScheme
+from ...striping import round_robin_striping
+from ...networking import upload
 
 
 class StripedStorageScheme(StorageScheme):
@@ -9,7 +11,10 @@ class StripedStorageScheme(StorageScheme):
     def number_of_peers(self):
         pass
 
-    @abstractmethod
-    def allocate(self, blocks: list, hosts: list) -> dict:
+    def stripe(self, blocks: list, host_uids: list) -> dict:
         """ Allocate blocks to hosts. """
-        pass
+        peer_allocation = round_robin_striping(host_uids, blocks)
+        for peer_uid in peer_allocation:
+            peer_blocks = peer_allocation[peer_uid]  # list of blocks
+            for block in peer_blocks:
+                upload(block, peer_uid)

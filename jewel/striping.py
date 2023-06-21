@@ -1,7 +1,14 @@
-from .block import store_block
+from collections import defaultdict
+from itertools import cycle
+from .networking import upload
 
 
-def stripe_blocks(peer_uid, blocks):
-    """ Distribute blocks across peers. """
-    for block in blocks:
-        store_block(block, peer_uid)
+def round_robin_striping(peer_uids, blocks):
+    """ Store blocks on a specific peer. """
+    allocations = defaultdict(list)
+    # round robin allocation
+    for h in cycle(peer_uids):
+        if not blocks:
+            break
+        allocations[h].append(blocks.pop())
+    return allocations
