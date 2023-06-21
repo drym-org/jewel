@@ -22,14 +22,16 @@ log = partial(log, NAME)
 
 def load_filesystem():
     filesystem = {}
-    if os.path.exists(FILESYSTEM):
-        with open(FILESYSTEM, 'r') as f:
+    path = os.path.join(DISK, FILESYSTEM)
+    if os.path.exists(path):
+        with open(path, 'r') as f:
             filesystem = json.load(f)
     return filesystem
 
 
 def persist_filesystem(filesystem):
-    with open(FILESYSTEM, 'w') as f:
+    path = os.path.join(DISK, FILESYSTEM)
+    with open(path, 'w') as f:
         json.dump(filesystem, f)
 
 
