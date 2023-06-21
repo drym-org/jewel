@@ -21,8 +21,8 @@ NAME = unique_name(NAMESPACE, PWD)
 os.environ["JEWEL_NODE_NAME"] = NAME
 
 CONFIG_FILE = 'config.ini'
-# SCHEME = NaiveDuplication(2)  # load_peer_config(CONFIG_FILE)
-SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
+SCHEME = NaiveDuplication(2)  # load_peer_config(CONFIG_FILE)
+# SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
 
 log = partial(log, NAME)
 
