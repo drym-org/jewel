@@ -21,8 +21,8 @@ NAME = unique_name(NAMESPACE, PWD)
 os.environ["JEWEL_NODE_NAME"] = NAME
 
 CONFIG_FILE = 'config.ini'
-SCHEME = NaiveDuplication(2)  # load_peer_config(CONFIG_FILE)
-# SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
+# SCHEME = NaiveDuplication(2)  # load_peer_config(CONFIG_FILE)
+SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
 
 log = partial(log, NAME)
 
@@ -35,13 +35,16 @@ class Peer:
     def dir(self):
         return dir()
 
-    def has_file(self, filename):
-        """ This should be used exclusively by the fileserver, and exclusively
-        to check for the presence of blocks via block ids - not naive
-        filenames. """
-        # TODO: rename to has_block
+    def has_block(self, block_name):
+        """ This is typically used by the fileserver to check for the presence
+        of blocks via block names - not naive filenames. Naive filenames should
+        not typically be used since the filesystem implementation is in terms
+        of blocks rather than files. The one exception is in checking whether a
+        peer already has the file before making a request to get it from the
+        network, in which case it would be silly for the requesting client to
+        ask the server whether it (itself) already has this file. """
         files = self.dir()
-        return (filename in files)
+        return (block_name in files)
 
     def store(self, metadata, contents):
         """ Store a file on this peer (note that this method is called by
@@ -77,7 +80,7 @@ class Peer:
         instruct this peer to perform actions, in this case,
         to request to get a file stored on the network.
         """
-        if self.has_file(filename):
+        if self.has_block(filename):
             log(f"Already have {filename}!\n")
         else:
             SCHEME.get(filename)

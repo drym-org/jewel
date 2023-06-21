@@ -10,6 +10,20 @@ from ...networking import peers_available_to_host
 
 
 class ShardedDuplication(ShardedStorageScheme):
+    """
+    This scheme splits the original file into K pieces or "shards" before
+    storing them on N hosts. On its own, there is no redundancy entailed
+    here. The point of sharding is to gain the flexibility to customize aspects
+    of storage and retrieval, including the use of nontrivial error recovery
+    schemes and downloading strategies.
+
+    To store the file, we discover live peers, select N of them, shard the file
+    into K pieces, and distribute ("stripe") the K shards across the N peers.
+    To retrieve the file, we lookup the shards for the file (via the
+    fileserver), discover the peers hosting each shard, and download each shard
+    from its hosting peer. Finally, we reconstitute the file by concatenating
+    the shards, verifying the checksum with the fileserver, and then saving it.
+    """
 
     def __init__(self, number_of_peers):
         self.number_of_peers = number_of_peers
@@ -18,9 +32,10 @@ class ShardedDuplication(ShardedStorageScheme):
         """ Divide the input file into non-overlapping blocks. """
         return [Block(compute_checksum(file), file)]
 
-    def introduce_redundancy(self, shards):
-        """ Add redundancy to the shards to facilitate error recovery. """
-        return shards
+    def introduce_redundancy(self, blocks):
+        """ Add redundancy to the blocks (shards) to facilitate error
+        recovery. """
+        return blocks
 
     def allocate(self, blocks, host_uids) -> dict:
         """ Allocate all blocks to the available hosts."""

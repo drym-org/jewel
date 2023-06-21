@@ -23,7 +23,7 @@ def discover_peers():
                 ns.remove(name)
             else:
                 live_peers[name] = uid
-    log(NAME, f"Discovered peers {live_peers}")
+    log(NAME, f"Discovered peers {list(live_peers.keys())}")
     return live_peers
 
 
@@ -38,7 +38,7 @@ def peers_available_to_host(metadata: BlockMetadata):
         peers = server.peers_available_to_host(metadata.__dict__)
         if NAME in peers:
             del peers[NAME]
-        log(NAME, f"Peers available to host {metadata.checksum} are {peers}")
+        log(NAME, f"Peers available to host {metadata.checksum} are {list(peers.keys())}")
         return list(peers.values())
 
 
@@ -55,5 +55,17 @@ def hosting_peers(filename):
         # server, we don't need to check again here that we aren't in the
         # returned list of peers hosting this file (as we do in
         # peers_available_to_host)
-        log(NAME, f"Peers hosting {filename} are {peers}")
+        log(NAME, f"Peers hosting {filename} are {list(peers.keys())}")
         return list(peers.values())
+
+
+def block_name_for_file(filename):
+    """ Ask the server if it knows this file and what the block name
+    is. Internally to the filesystem, we operate exclusively in terms of blocks
+    rather than filenames. """
+    NAME = os.environ.get('JEWEL_NODE_NAME')
+    log(NAME, f"Querying block name for {filename}...")
+    with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
+        block_name = server.block_name_for_file(filename)
+        log(NAME, f"Block name for {filename} is {block_name}")
+        return block_name

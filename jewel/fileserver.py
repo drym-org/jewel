@@ -4,6 +4,7 @@ import os
 from functools import partial
 from .names import unique_name
 from .networking import discover_peers
+from .models import BlockMetadata
 from .log import log
 
 
@@ -16,11 +17,38 @@ os.environ["JEWEL_NODE_NAME"] = NAME
 
 log = partial(log, NAME)
 
+# TODO: persist to disk
+filesystem = {}
+
 
 @Pyro5.api.expose
 class FileServer:
+
+    def block_name_for_file(self, filename):
+        """ Transactions with the fileserver are typically in terms of block
+        name rather than filename, so we get the block name for a file first as
+        part of any communications about it.
+
+        Every file has a corresponding block, but not every block is (an
+        entire) file. More than one file may correspond to the same block if
+        they contain the same data.
+
+        The filesystem internally only cares about blocks. """
+        try:
+            return filesystem[filename]
+        except KeyError:
+            log("Unknown file {filename}!")
+
     def peers_available_to_host(self, metadata):
-        # m = BlockMetadata(**metadata)
+        """ Identify all peers available to host a file that a client desires
+        to store on the network. """
+        m = BlockMetadata(**metadata)
+        if m.name != m.checksum:
+            # this is a named block, i.e. a file that a user cares about
+            # so we retain a mapping of it to its block name so that
+            # clients may refer to it using the filename rather than the
+            # block name
+            filesystem[m.name] = m.checksum
         # find all registered peers
         # for now that's all this does. But
         # we could tailor the response to the
@@ -29,14 +57,21 @@ class FileServer:
         # performance, etc.
         return discover_peers()
 
-    def hosting_peers(self, filename):
+    def hosting_peers(self, block_name):
+        """ Identify all peers hosting a given block. The block name is the
+        checksum of the contents of the block -- not a simple
+        filename. Typically, the client first asks the fileserver the block
+        name for a particular filename as the first step of the handshake, and
+        only then invokes this interface. Filenames are only relevant at the
+        initial and final stages of interaction with the filesystem, and
+        internally, the operation is entirely in terms of blocks."""
         # find all peers currently hosting this file
         peers_dict = discover_peers()
         peers = list(peers_dict.keys())
         hosts = []
         for peer_name in peers:
             with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
-                if peer.has_file(filename):
+                if peer.has_block(block_name):
                     hosts.append(peer_name)
         # kind of kludgy but we're just getting the "sub-dict" of the peer dict
         # containing only those peers that are hosting the file

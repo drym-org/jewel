@@ -12,6 +12,16 @@ from ...file import write_file
 
 
 class NaiveDuplication(RedundantStorageScheme):
+    """
+    This scheme adds redundancy to increase the availability of the file by
+    simply duplicating the file across N peers. It differs from the "hosting"
+    scheme in that it stores the file on N peers instead of just one.
+
+    To store the file, we discover live peers, select N of them, and store a
+    copy of the file on each of them ("stripe" the copies across the peers).
+    To retrieve the file, we discover all hosting peers and download the file
+    from one (any) of them.
+    """
 
     _N = None
 
