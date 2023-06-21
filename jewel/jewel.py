@@ -35,9 +35,19 @@ def _show_file_menu(peer):
     if not files:
         return None
     menu = TerminalMenu(files, title="Which file?")
-    file_index = menu.show()
-    filename = files[file_index]
+    index = menu.show()
+    filename = files[index]
     return filename
+
+
+def _show_schemes_menu(peer):
+    schemes = peer.list_schemes()
+    if not schemes:
+        return None
+    menu = TerminalMenu(schemes, title="Which scheme?")
+    index = menu.show()
+    scheme = schemes[index]
+    return scheme
 
 
 def dir():
@@ -79,23 +89,50 @@ def get_file():
         peer.request_to_get(filename)
 
 
+def get_storage_scheme():
+    """ Get a peer's current storage scheme. """
+    peer_name = _show_peer_menu()
+
+    with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
+        scheme = peer.current_scheme()
+        if scheme:
+            print(f"Storage scheme for {peer_name} is {scheme} ...\n")
+        else:
+            error(f"Unrecognized scheme advertised by {peer_name}!")
+
+
+def set_storage_scheme():
+    """ Set a peer's storage scheme. """
+    peer_name = _show_peer_menu()
+
+    with Pyro5.api.Proxy(f"PYRONAME:{peer_name}") as peer:
+        scheme = _show_schemes_menu(peer)
+        if scheme:
+            print(f"OK. Setting storage scheme for {peer_name} to {scheme} ...\n")
+            peer.set_storage_scheme(scheme)
+        else:
+            error(f"No schemes advertised by {peer_name}!")
+
+
 def show_help():
-    info = ["[d] dir - show files stored on a peer",
+    info = ["[d] Dir - show files stored on a peer",
             "[s] Store a file - instruct a peer to request to store a file on the network",
             "[x] Delete a file - remove a file from a specific peer",
-            "[g] get a file - instruct a peer to request a file stored on the network",
-            "[?] help - show this menu",
-            "[q] quit - exit to the shell"]
+            "[g] Get a file - instruct a peer to request a file stored on the network",
+            "[?] Help - show this menu",
+            "[q] Quit - exit to the shell"]
     print("\n".join(info))
 
 
 def main_menu():
-    options = ["[d] dir",
+    options = ["[d] Dir",
                "[s] Store a file",
                "[x] Delete a file",
-               "[g] get a file",
-               "[?] help",
-               "[q] quit"]
+               "[g] Get a file",
+               "[v] Get storage scheme",
+               "[u] Set storage scheme",
+               "[?] Help",
+               "[q] Quit"]
     menu = TerminalMenu(options, title="What would you like to do?")
     selected_index = menu.show()
     if selected_index == 0:
@@ -107,8 +144,12 @@ def main_menu():
     elif selected_index == 3:
         get_file()
     elif selected_index == 4:
-        show_help()
+        get_storage_scheme()
     elif selected_index == 5:
+        set_storage_scheme()
+    elif selected_index == 6:
+        show_help()
+    elif selected_index == 7:
         exit(0)
     else:
         exit(0)

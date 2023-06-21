@@ -35,6 +35,25 @@ class Peer:
     def dir(self):
         return dir()
 
+    def current_scheme(self):
+        if isinstance(SCHEME, Hosting):
+            return 'hosting'
+        elif isinstance(SCHEME, NaiveDuplication):
+            return 'naive'
+
+    def list_schemes(self):
+        return ['hosting', 'naive']
+
+    def set_storage_scheme(self, scheme):
+        # global could be avoided here by using
+        # an instance instead of a class in registering
+        # with pyro. But seems unnecessary for now.
+        global SCHEME
+        if scheme == 'hosting':
+            SCHEME = Hosting()
+        elif scheme == 'naive':
+            SCHEME = NaiveDuplication(2)
+
     def has_block(self, block_name):
         """ This is typically used by the fileserver to check for the presence
         of blocks via block names - not naive filenames. Naive filenames should
