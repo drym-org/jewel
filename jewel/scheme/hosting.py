@@ -1,5 +1,6 @@
 import Pyro5.api
 import base64
+import os
 from collections import defaultdict
 from itertools import cycle
 from random import choice
@@ -10,6 +11,7 @@ from ..block import make_block, store_block
 from ..metadata import make_metadata
 from ..networking import peers_available_to_host, hosting_peers
 from ..file import write_file
+from ..log import log
 
 
 class Hosting(StorageScheme):
@@ -25,7 +27,13 @@ class Hosting(StorageScheme):
     def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
+        NAME = os.environ.get('JEWEL_NODE_NAME')
         peers = hosting_peers(filename)
+        if len(peers) > 1:
+            log(NAME,
+                "Warning: Storage scheme is simple hosting "
+                "but file was found on more than one (specifically, "
+                f"{len(peers)}) hosts!")
         chosen_peer = peers[0]
         with Pyro5.api.Proxy(chosen_peer) as peer:
             # TODO: need to also retrieve the metadata

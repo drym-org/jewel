@@ -47,6 +47,7 @@ def hosting_peers(filename):
     shard would have a name (its SHA1 hash, by default), and we would pass that
     here to retrieve that shard just like any other file.
     """
+    NAME = os.environ.get('JEWEL_NODE_NAME')
     log(NAME, f"Requesting to get {filename}...")
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
         peers = server.hosting_peers(filename)
