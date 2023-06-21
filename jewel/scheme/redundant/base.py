@@ -10,11 +10,11 @@ class RedundantStorageScheme(StorageScheme):
         pass
 
     @abstractmethod
-    def allocate(self, blocks, hosts) -> dict:
+    def allocate(self, blocks: list, hosts: list) -> dict:
         """ Allocate blocks to hosts. """
         pass
 
     @abstractmethod
-    def introduce_redundancy(self, blocks):
+    def introduce_redundancy(self, blocks: list) -> list:
         """ Add redundancy to the blocks to facilitate error recovery. """
         pass

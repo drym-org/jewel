@@ -22,8 +22,8 @@ NAME = unique_name(NAMESPACE, PWD)
 os.environ["JEWEL_NODE_NAME"] = NAME
 
 CONFIG_FILE = 'config.ini'
-# SCHEME = NaiveDuplication(1)  # load_peer_config(CONFIG_FILE)
-SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
+SCHEME = NaiveDuplication(2)  # load_peer_config(CONFIG_FILE)
+# SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
 
 log = partial(log, NAME)
 
@@ -60,6 +60,7 @@ class Peer:
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:
+            log(f"I'm sending {filename}.\n")
             return contents
 
     def delete(self, filename):

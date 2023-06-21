@@ -1,12 +1,16 @@
+import Pyro5.api
+import base64
 from itertools import cycle
 from collections import defaultdict
+from random import choice
 from .base import RedundantStorageScheme
 from ...checksum import compute_checksum
 from ...models import Block
 from ...striping import stripe_blocks
 from ...block import make_block
 from ...metadata import make_metadata
-from ...networking import peers_available_to_host
+from ...networking import peers_available_to_host, hosting_peers
+from ...file import write_file
 
 
 class NaiveDuplication(RedundantStorageScheme):
@@ -24,10 +28,13 @@ class NaiveDuplication(RedundantStorageScheme):
     def number_of_peers(self, N):
         self._N = N
 
-    def introduce_redundancy(self, block):
-        """ Add redundancy to the shards to facilitate error recovery. """
+    def introduce_redundancy(self, blocks):
+        """ Add redundancy to the blocks to facilitate error recovery. """
         # just repeat the block N times, where N
         # is the number of peers
+        # we expect there to be exactly one block
+        # with this scheme
+        block = blocks[0]
         return [block for i in range(self.number_of_peers)]
 
     def allocate(self, blocks, host_uids) -> dict:
@@ -46,7 +53,8 @@ class NaiveDuplication(RedundantStorageScheme):
         block = make_block(file.data)
         metadata = make_metadata(block, file.name)
         peer_uids = peers_available_to_host(metadata)
-        blocks = self.introduce_redundancy(block)
+        blocks = [block]
+        blocks = self.introduce_redundancy(blocks)
         peer_allocation = self.allocate(blocks, peer_uids)
         for peer_uid in peer_allocation:
             peer_blocks = peer_allocation[peer_uid]  # list of blocks
@@ -60,5 +68,13 @@ class NaiveDuplication(RedundantStorageScheme):
     def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
-        # TODO
-        pass
+        peers = hosting_peers(filename)
+        # TODO: when peer metadata is added, we can select the
+        # "best" peer here instead of a random peer
+        chosen_peer = choice(peers)
+        with Pyro5.api.Proxy(chosen_peer) as peer:
+            # TODO: need to also retrieve the metadata
+            # to compare the checksum
+            file_contents = peer.retrieve(filename)
+            decoded = base64.decodebytes(bytes(file_contents['data'], 'utf-8'))
+            write_file(filename, decoded)
