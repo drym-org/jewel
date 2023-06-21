@@ -9,9 +9,8 @@ from .names import unique_name
 from .log import log
 from .scheme import Hosting, NaiveDuplication
 from .networking import peers_available_to_host, hosting_peers
-from .file import file_contents, write_file
+from .file import file_contents, write_file, dir, delete_file
 
-DISK = 'disk'
 # every node on the network needs to have a distinct name
 # so we define namespaces and derive the final name by
 # appending the name of the current directory
@@ -31,9 +30,13 @@ class Peer:
         return True
 
     def dir(self):
-        return os.listdir(DISK)
+        return dir()
 
     def has_file(self, filename):
+        """ This should be used exclusively by the fileserver, and exclusively
+        to check for the presence of blocks via block ids - not naive
+        filenames. """
+        # TODO: rename to has_block
         files = self.dir()
         return (filename in files)
 
@@ -44,12 +47,12 @@ class Peer:
         decoded = base64.decodebytes(bytes(contents['data'], 'utf-8'))
         checksum = compute_checksum(decoded)
         assert checksum == m.checksum
-        write_file(DISK, m.checksum, decoded)
+        write_file(m.checksum, decoded)
         log(f"Hello! I've saved {m.checksum}.\n")
 
     def retrieve(self, filename):
         try:
-            contents = file_contents(DISK, filename)
+            contents = file_contents(filename)
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:
@@ -57,7 +60,7 @@ class Peer:
 
     def delete(self, filename):
         try:
-            os.remove(os.path.join(DISK, filename))
+            delete_file(filename)
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:
@@ -91,7 +94,7 @@ class Peer:
         to request to store a file on the network.
         """
         try:
-            contents = file_contents(DISK, filename)
+            contents = file_contents(filename)
         except FileNotFoundError:
             log(f"{filename} not found!")
         else:

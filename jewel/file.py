@@ -1,11 +1,24 @@
 import os
 
+DISK = 'disk'
 
-def write_file(base_path, filename, contents):
-    with open(os.path.join(base_path, filename), 'wb') as f:
+
+def delete_file(filename):
+    try:
+        os.remove(os.path.join(DISK, filename))
+    except FileNotFoundError:
+        raise
+
+
+def write_file(filename, contents):
+    with open(os.path.join(DISK, filename), 'wb') as f:
         f.write(contents)
 
 
-def file_contents(base_path, filename):
-    with open(os.path.join(base_path, filename), 'rb') as f:
+def file_contents(filename):
+    with open(os.path.join(DISK, filename), 'rb') as f:
         return f.read()
+
+
+def dir():
+    return os.listdir(DISK)
