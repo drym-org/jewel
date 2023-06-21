@@ -4,6 +4,7 @@ from itertools import cycle
 from collections import defaultdict
 from random import choice
 from .base import RedundantStorageScheme
+from ..striped import StripedStorageScheme
 from ...striping import stripe_blocks
 from ...block import make_block
 from ...metadata import make_metadata
@@ -11,7 +12,7 @@ from ...networking import peers_available_to_host, hosting_peers, block_name_for
 from ...file import write_file
 
 
-class NaiveDuplication(RedundantStorageScheme):
+class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
     """
     This scheme adds redundancy to increase the availability of the file by
     simply duplicating the file across N peers. It differs from the "hosting"
