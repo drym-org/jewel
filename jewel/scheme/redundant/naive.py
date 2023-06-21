@@ -4,8 +4,6 @@ from itertools import cycle
 from collections import defaultdict
 from random import choice
 from .base import RedundantStorageScheme
-from ...checksum import compute_checksum
-from ...models import Block
 from ...striping import stripe_blocks
 from ...block import make_block
 from ...metadata import make_metadata

@@ -2,7 +2,6 @@
 import Pyro5.api
 import os
 from functools import partial
-from .models import BlockMetadata
 from .names import unique_name
 from .networking import discover_peers
 from .log import log

@@ -3,12 +3,11 @@ import Pyro5.api
 import os
 import base64
 from functools import partial
-from .models import Block, BlockMetadata, File
+from .models import BlockMetadata, File
 from .checksum import compute_checksum
 from .names import unique_name
 from .log import log
 from .scheme import Hosting, NaiveDuplication
-from .networking import peers_available_to_host, hosting_peers
 from .file import file_contents, write_file, dir, delete_file
 
 # every node on the network needs to have a distinct name

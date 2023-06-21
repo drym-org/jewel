@@ -1,12 +1,8 @@
 import Pyro5.api
 import base64
 import os
-from collections import defaultdict
-from itertools import cycle
 from random import choice
 from .base import StorageScheme
-from ..checksum import compute_checksum
-from ..models import Block
 from ..block import make_block, store_block
 from ..metadata import make_metadata
 from ..networking import peers_available_to_host, hosting_peers
