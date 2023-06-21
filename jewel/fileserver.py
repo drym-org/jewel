@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import Pyro5.api
 import os
+import json
 from functools import partial
 from .names import unique_name
 from .networking import discover_peers
@@ -9,6 +10,7 @@ from .log import log
 
 
 DISK = 'disk'
+FILESYSTEM = 'filesystem.json'
 NAMESPACE = 'jewel.fileserver'
 NAME = unique_name(NAMESPACE, "")  # TODO: consistency
 # so that all logs by this process show
@@ -17,12 +19,26 @@ os.environ["JEWEL_NODE_NAME"] = NAME
 
 log = partial(log, NAME)
 
-# TODO: persist to disk
-filesystem = {}
+
+def load_filesystem():
+    filesystem = {}
+    if os.path.exists(FILESYSTEM):
+        with open(FILESYSTEM, 'r') as f:
+            filesystem = json.load(f)
+    return filesystem
+
+
+def persist_filesystem(filesystem):
+    with open(FILESYSTEM, 'w') as f:
+        json.dump(filesystem, f)
+
+
+filesystem = load_filesystem()
 
 
 @Pyro5.api.expose
 class FileServer:
+    """ Fantastic files and where to find them. """
 
     def block_name_for_file(self, filename):
         """ Transactions with the fileserver are typically in terms of block
@@ -37,7 +53,7 @@ class FileServer:
         try:
             return filesystem[filename]
         except KeyError:
-            log("Unknown file {filename}!")
+            log(f"Unknown file {filename}!")
 
     def peers_available_to_host(self, metadata):
         """ Identify all peers available to host a file that a client desires
@@ -49,6 +65,8 @@ class FileServer:
             # clients may refer to it using the filename rather than the
             # block name
             filesystem[m.name] = m.checksum
+            # TODO: use sqlite
+            persist_filesystem(filesystem)
         # find all registered peers
         # for now that's all this does. But
         # we could tailor the response to the
@@ -64,7 +82,12 @@ class FileServer:
         name for a particular filename as the first step of the handshake, and
         only then invokes this interface. Filenames are only relevant at the
         initial and final stages of interaction with the filesystem, and
-        internally, the operation is entirely in terms of blocks."""
+        internally, the operation is entirely in terms of blocks.
+
+        Currently, we poll all peers to see who has the block, but, TODO: it
+        would be better to maintain a 'block book' mapping blocks to hosting
+        peers, for performance. This would require peers to notify the server
+        whenever they receive a new file."""
         # find all peers currently hosting this file
         peers_dict = discover_peers()
         peers = list(peers_dict.keys())
