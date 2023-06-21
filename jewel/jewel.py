@@ -22,6 +22,7 @@ def _show_peer_menu():
     # TODO: do we need to suppress logging here?
     peers = discover_peers()
     peers = list(peers.keys())
+    peers.sort()
     peer_options = [f"[{_extract_number(p)}] {p}" for p in peers]
     menu = TerminalMenu(peer_options, title="Which peer?")
     peer_index = menu.show()
