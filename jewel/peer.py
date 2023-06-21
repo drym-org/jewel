@@ -3,12 +3,13 @@ import Pyro5.api
 import os
 import base64
 from functools import partial
-from .models import BlockMetadata, File
+from .models import BlockMetadata, File, PeerMetadata
 from .checksum import compute_checksum
 from .names import unique_name
 from .log import log
 from .scheme import Hosting, NaiveDuplication
 from .file import file_contents, write_file, dir, delete_file
+from .config import load_peer_config
 
 # every node on the network needs to have a distinct name
 # so we define namespaces and derive the final name by
@@ -20,9 +21,16 @@ NAME = unique_name(NAMESPACE, PWD)
 # where they're coming from
 os.environ["JEWEL_NODE_NAME"] = NAME
 
-CONFIG_FILE = 'config.ini'
-SCHEME = NaiveDuplication(2)  # load_peer_config(CONFIG_FILE)
-# SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
+
+def load_scheme(metadata):
+    if metadata.scheme == 'hosting':
+        return Hosting()
+    elif metadata.scheme == 'naive':
+        return NaiveDuplication(metadata.n)
+
+
+peer_metadata = load_peer_config()
+SCHEME = load_scheme(peer_metadata)
 
 log = partial(log, NAME)
 
@@ -49,10 +57,9 @@ class Peer:
         # an instance instead of a class in registering
         # with pyro. But seems unnecessary for now.
         global SCHEME
-        if scheme == 'hosting':
-            SCHEME = Hosting()
-        elif scheme == 'naive':
-            SCHEME = NaiveDuplication(2)
+        # NOTE: hardcoded number of peers to 2!
+        peer_metadata = PeerMetadata(scheme, 2)
+        SCHEME = load_scheme(peer_metadata)
 
     def has_block(self, block_name):
         """ This is typically used by the fileserver to check for the presence

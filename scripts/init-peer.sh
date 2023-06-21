@@ -7,3 +7,4 @@
 # TODO: different files on different peers
 
 mkdir -p live/$1/disk
+cp config.ini live/$1

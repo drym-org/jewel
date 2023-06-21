@@ -19,4 +19,8 @@ class File:
     name: str
     data: bytes
 
-# TODO: PeerMetadata
+
+@dataclass
+class PeerMetadata:
+    scheme: str
+    n: int

@@ -119,6 +119,8 @@ def show_help():
             "[s] Store a file - instruct a peer to request to store a file on the network",
             "[x] Delete a file - remove a file from a specific peer",
             "[g] Get a file - instruct a peer to request a file stored on the network",
+            "[v] Get storage scheme - see a peer's current storage scheme (e.g. naive duplication, sharding, etc.)",
+            "[u] Set storage scheme - set peer's storage scheme",
             "[?] Help - show this menu",
             "[q] Quit - exit to the shell"]
     print("\n".join(info))
