@@ -67,5 +67,8 @@ def block_name_for_file(filename):
     log(NAME, f"Querying block name for {filename}...")
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
         block_name = server.block_name_for_file(filename)
-        log(NAME, f"Block name for {filename} is {block_name}")
+        if block_name:
+            log(NAME, f"Block name for {filename} is {block_name}")
+        else:
+            log(NAME, f"{filename} has no block name.")
         return block_name

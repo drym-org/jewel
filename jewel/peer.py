@@ -109,8 +109,12 @@ class Peer:
         if self.has_block(filename):
             log(f"Already have {filename}!\n")
         else:
-            SCHEME.get(filename)
-            log(f"{filename} received.\n")
+            try:
+                SCHEME.get(filename)
+            except FileNotFoundError:
+                log(f"{filename} not found!")
+            else:
+                log(f"{filename} received.\n")
 
     def request_to_store(self, filename):
         """ Make a request to store a file on the network.

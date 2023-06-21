@@ -1,14 +1,11 @@
 import Pyro5.api
 import base64
-from itertools import cycle
-from collections import defaultdict
 from random import choice
 from .base import RedundantStorageScheme
 from ..striped import StripedStorageScheme
 from ...striping import stripe_blocks
 from ...block import make_block
 from ...metadata import make_metadata
-from ...networking import peers_available_to_host, hosting_peers, block_name_for_file
 from ...file import write_file
 
 
@@ -59,9 +56,7 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
 
     def store(self, file):
         """ The main entry point to store a file using this scheme. """
-        block = make_block(file.data)
-        metadata = make_metadata(block, file.name)
-        peer_uids = peers_available_to_host(metadata)
+        block, peer_uids = self.handshake_store(file)
         blocks = [block]
         blocks = self.introduce_redundancy(blocks)
         peer_allocation = self.allocate(blocks, peer_uids)
@@ -77,8 +72,7 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
     def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
-        block_name = block_name_for_file(filename)
-        peers = hosting_peers(block_name)
+        block_name, peers = self.handshake_get(filename)
         # TODO: when peer metadata is added, we can select the
         # "best" peer here instead of a random peer
         chosen_peer = choice(peers)

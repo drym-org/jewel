@@ -5,7 +5,6 @@ from random import choice
 from .base import StorageScheme
 from ..block import make_block, store_block
 from ..metadata import make_metadata
-from ..networking import peers_available_to_host, hosting_peers, block_name_for_file
 from ..file import write_file
 from ..log import log
 
@@ -21,9 +20,7 @@ class Hosting(StorageScheme):
 
     def store(self, file):
         """ The main entry point to store a file using this scheme. """
-        block = make_block(file.data)
-        metadata = make_metadata(block, file.name)
-        peer_uids = peers_available_to_host(metadata)
+        block, peer_uids = self.handshake_store(file)
         host = choice(peer_uids)
         store_block(block, host)
 
@@ -31,8 +28,7 @@ class Hosting(StorageScheme):
         """ The main entry point to get a file that was stored using this
         scheme. """
         NAME = os.environ.get('JEWEL_NODE_NAME')
-        block_name = block_name_for_file(filename)
-        peers = hosting_peers(block_name)
+        block_name, peers = self.handshake_get(filename)
         if len(peers) > 1:
             log(NAME,
                 "Warning: Storage scheme is simple hosting "
