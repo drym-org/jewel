@@ -57,7 +57,7 @@ class NaiveDuplication(RedundantStorageScheme):
         # in a short feedback loop - in REPL for instance
         # note two files with different names but the same contents would reuse
 
-    def get(self, filename, contents, peer_uids):
+    def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
         # TODO

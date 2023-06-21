@@ -9,7 +9,7 @@ class StorageScheme(ABC):
         pass
 
     @abstractmethod
-    def get(self, filename, contents, peer_uids):
+    def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
         pass

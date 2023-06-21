@@ -19,7 +19,8 @@ PWD = os.path.basename(os.getcwd())
 NAME = unique_name(NAMESPACE, PWD)
 
 CONFIG_FILE = 'config.ini'
-SCHEME = NaiveDuplication(1)  # load_peer_config(CONFIG_FILE)
+# SCHEME = NaiveDuplication(1)  # load_peer_config(CONFIG_FILE)
+SCHEME = Hosting()  # load_peer_config(CONFIG_FILE)
 
 log = partial(log, NAME)
 
@@ -75,15 +76,8 @@ class Peer:
         """
         if self.has_file(filename):
             log(f"Already have {filename}!\n")
-            return
-        peers = hosting_peers(filename, caller_name=NAME)
-        chosen_peer = peers[0]
-        with Pyro5.api.Proxy(chosen_peer) as peer:
-            # TODO: need to also retrieve the metadata
-            # to compare the checksum
-            file_contents = peer.retrieve(filename)
-            decoded = base64.decodebytes(bytes(file_contents['data'], 'utf-8'))
-            write_file(DISK, filename, decoded)
+        else:
+            SCHEME.get(filename)
             log(f"{filename} received.\n")
 
     def request_to_store(self, filename):

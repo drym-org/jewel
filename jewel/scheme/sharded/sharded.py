@@ -52,7 +52,7 @@ class ShardedDuplication(ShardedStorageScheme):
             peer_shards = [shard_index[sid] for sid in peer_shards]
             stripe_blocks(peer_uid, peer_shards)
 
-    def get(self, filename, contents, peer_uids):
+    def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
         # TODO
