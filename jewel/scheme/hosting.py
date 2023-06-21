@@ -25,7 +25,7 @@ class Hosting(StorageScheme):
     def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
-        peers = hosting_peers(filename, caller_name=NAME)
+        peers = hosting_peers(filename)
         chosen_peer = peers[0]
         with Pyro5.api.Proxy(chosen_peer) as peer:
             # TODO: need to also retrieve the metadata

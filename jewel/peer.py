@@ -17,6 +17,9 @@ from .file import file_contents, write_file, dir, delete_file
 NAMESPACE = 'jewel.peer'
 PWD = os.path.basename(os.getcwd())
 NAME = unique_name(NAMESPACE, PWD)
+# so that all logs by this process show
+# where they're coming from
+os.environ["JEWEL_NODE_NAME"] = NAME
 
 CONFIG_FILE = 'config.ini'
 # SCHEME = NaiveDuplication(1)  # load_peer_config(CONFIG_FILE)

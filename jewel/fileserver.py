@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import Pyro5.api
+import os
 from functools import partial
 from .models import BlockMetadata
 from .names import unique_name
@@ -10,6 +11,9 @@ from .log import log
 DISK = 'disk'
 NAMESPACE = 'jewel.fileserver'
 NAME = unique_name(NAMESPACE, "")  # TODO: consistency
+# so that all logs by this process show
+# where they're coming from
+os.environ["JEWEL_NODE_NAME"] = NAME
 
 log = partial(log, NAME)
 
@@ -24,11 +28,11 @@ class FileServer:
         # details of the request here
         # or cache the result for better
         # performance, etc.
-        return discover_peers(NAME)
+        return discover_peers()
 
     def hosting_peers(self, filename):
         # find all peers currently hosting this file
-        peers_dict = discover_peers(NAME)
+        peers_dict = discover_peers()
         peers = list(peers_dict.keys())
         hosts = []
         for peer_name in peers:
