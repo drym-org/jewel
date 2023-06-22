@@ -1,8 +1,7 @@
 from .base import ShardedStorageScheme
 from ..striped import StripedStorageScheme
 from ..redundant import RedundantStorageScheme
-from ...sharding import register_shards, lookup_shards, download_shards, fuse_shards
-from ...file import write_file
+from ...sharding import register_shards
 from ...block import make_block
 from io import BytesIO
 from itertools import chain
@@ -84,17 +83,3 @@ class RedundantSharding(ShardedStorageScheme, StripedStorageScheme, RedundantSto
         shards = self.shard(block)
         shards = self.introduce_redundancy(shards)
         self.stripe(shards, peer_uids)
-
-    def get(self, filename):
-        """ The main entry point to get a file that was stored using this
-        scheme. """
-        # TODO: this handshake asks which peers have the file
-        # but we don't need to do that yet with sharding
-        block_name, _ = self.handshake_get(filename)
-        shards = lookup_shards(block_name)  # checksums
-        shards = download_shards(shards)  # blocks
-        block = fuse_shards(shards)
-        assert block_name == block.checksum
-        # write it with the original filename
-        # instead of the block name
-        write_file(filename, block.data)

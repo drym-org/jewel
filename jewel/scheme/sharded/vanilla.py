@@ -1,7 +1,6 @@
 from .base import ShardedStorageScheme
 from ..striped import StripedStorageScheme
-from ...sharding import register_shards, lookup_shards, download_shards, fuse_shards
-from ...file import write_file
+from ...sharding import register_shards
 from ...block import make_block
 from io import BytesIO
 
@@ -78,17 +77,3 @@ class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
         # ordered list of shards
         shards = self.shard(block)
         self.stripe(shards, peer_uids)
-
-    def get(self, filename):
-        """ The main entry point to get a file that was stored using this
-        scheme. """
-        # TODO: this handshake asks which peers have the file
-        # but we don't need to do that yet with sharding
-        block_name, _ = self.handshake_get(filename)
-        shards = lookup_shards(block_name)  # checksums
-        shards = download_shards(shards)  # blocks
-        block = fuse_shards(shards)
-        assert block_name == block.checksum
-        # write it with the original filename
-        # instead of the block name
-        write_file(filename, block.data)
