@@ -24,3 +24,4 @@ class File:
 class PeerMetadata:
     scheme: str
     n: int
+    k: int

@@ -21,6 +21,8 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
     from one (any) of them.
     """
 
+    name = 'naive'
+
     _N = None
 
     def __init__(self, number_of_peers):
@@ -41,18 +43,7 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
         # we expect there to be exactly one block
         # with this scheme
         block = blocks[0]
-        return [block for i in range(self.number_of_peers)]
-
-    def allocate(self, blocks, host_uids) -> dict:
-        """ Allocate all blocks to the available hosts."""
-        # TODO: move to base class, probably
-        allocations = defaultdict(list)
-        # round robin allocation
-        for h in cycle(host_uids):
-            if not blocks:
-                break
-            allocations[h].append(blocks.pop())
-        return allocations
+        return [block for _i in range(self.number_of_peers)]
 
     def store(self, file):
         """ The main entry point to store a file using this scheme. """

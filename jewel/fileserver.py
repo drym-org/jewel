@@ -9,6 +9,12 @@ from .models import BlockMetadata
 from .log import log
 
 
+# TODO: now that the live folder doesn't contain any code
+# we don't really need a disk folder and can just put files
+# in the designated peer/filesystem folder, i.e. CWD
+# but just in case these scripts are accidentally run in the
+# wrong CWD, this would be an added safeguard against
+# clobbering local files, so we retain it.
 DISK = 'disk'
 FILESYSTEM = 'filesystem.json'
 NAMESPACE = 'jewel.fileserver'
@@ -36,6 +42,9 @@ def persist_filesystem(filesystem):
 
 
 filesystem = load_filesystem()
+# TODO: we may need more utility functions mapping
+# between "filespace" and "blockspace"
+blocktree = {}
 
 
 @Pyro5.api.expose
@@ -102,6 +111,38 @@ class FileServer:
         # containing only those peers that are hosting the file
         hosts = {k: v for k, v in peers_dict.items() if k in hosts}
         return hosts
+
+    def register_shards(self, block_name, shards):
+        """ Record shards for a block (as reported by a peer) in the
+        blocktree. This will allow us to know what the pieces of a file are and
+        also, by consulting the block book (or simply polling peers), where to
+        find them. """
+        number_of_shards = len(shards)
+        if number_of_shards == 0:
+            log("Warning: there's no sense in registering _no_ shards for "
+                f"{block_name}, even though it isn't an error. Not recording "
+                "shards.")
+            return
+        if len(shards) == 1 and shards[0] == block_name:
+            log(f"Error: {block_name} cannot be treated as a shard of itself!")
+            return
+
+        if block_name in blocktree:
+            previous_shards = blocktree[block_name]
+            if previous_shards != shards:
+                log("Warning: reported shards do not match existing shards. "
+                    "Using the new shards...")
+        log(f"Registered shards {shards} for {block_name}.")
+        blocktree[block_name] = shards
+
+    def lookup_shards(self, block_name):
+        """ Lookup shards for a given block.
+
+        Returns a list of the checksums of the shards."""
+        shards = blocktree.get(block_name)
+        if not shards:
+            log(f"Warning: No shards found for {block_name}.")
+        return shards
 
 
 def main():

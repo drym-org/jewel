@@ -15,6 +15,8 @@ class Hosting(StorageScheme):
     To retrieve the file, we contact the hosting peer and download it.
     """
 
+    name = 'hosting'
+
     def store(self, file):
         """ The main entry point to store a file using this scheme. """
         block, peer_uids = self.handshake_store(file)

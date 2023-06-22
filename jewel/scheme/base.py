@@ -6,6 +6,8 @@ from ..metadata import make_metadata
 
 class StorageScheme(ABC):
 
+    name = ''
+
     def handshake_store(self, file):
         block = make_block(file.data)
         metadata = make_metadata(block, file.name)

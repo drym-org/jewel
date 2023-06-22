@@ -1,3 +1,4 @@
+from collections import defaultdict
 import Pyro5.api
 import os
 import base64
@@ -95,3 +96,17 @@ def upload(block, peer_uid, name=None):
     metadata = make_metadata(block, name)
     with Pyro5.api.Proxy(peer_uid) as peer:
         peer.store(metadata.__dict__, block.data)
+
+
+# TODO: this could be done in a separate thread, one thread per peer, to
+# maximize throughput. Could potentially abstract this as a "DownloadScheme",
+# e.g. single "best" peer vs threaded multi-peer, but probably best to wait for
+# the "fragments" abstraction before implementing that, which are simply
+# low-level byte-ranges, rather than fixed (error-relevant) "shards"
+def download_from_peer(blocks, peer_uid):
+    """ Download many blocks from the same peer. """
+    downloaded = []
+    for block_name in blocks:
+        block = download(block_name, peer_uid)
+        downloaded.append(block)
+    return downloaded
