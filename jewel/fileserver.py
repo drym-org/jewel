@@ -17,6 +17,7 @@ from .log import log
 # clobbering local files, so we retain it.
 DISK = 'disk'
 FILESYSTEM = 'filesystem.json'
+BLOCKTREE = 'blocktree.json'
 NAMESPACE = 'jewel.fileserver'
 NAME = unique_name(NAMESPACE, "")  # TODO: consistency
 # so that all logs by this process show
@@ -26,25 +27,41 @@ os.environ["JEWEL_NODE_NAME"] = NAME
 log = partial(log, NAME)
 
 
-def load_filesystem():
-    filesystem = {}
-    path = os.path.join(DISK, FILESYSTEM)
+def load_from_json_file(filename):
+    data = {}
+    path = os.path.join(DISK, filename)
     if os.path.exists(path):
         with open(path, 'r') as f:
-            filesystem = json.load(f)
-    return filesystem
+            data = json.load(f)
+    return data
+
+
+def load_filesystem():
+    return load_from_json_file(FILESYSTEM)
+
+
+def load_blocktree():
+    return load_from_json_file(BLOCKTREE)
+
+
+def persist_to_json_file(data, filename):
+    path = os.path.join(DISK, filename)
+    with open(path, 'w') as f:
+        json.dump(data, f)
 
 
 def persist_filesystem(filesystem):
-    path = os.path.join(DISK, FILESYSTEM)
-    with open(path, 'w') as f:
-        json.dump(filesystem, f)
+    persist_to_json_file(filesystem, FILESYSTEM)
+
+
+def persist_blocktree(blocktree):
+    persist_to_json_file(blocktree, BLOCKTREE)
 
 
 filesystem = load_filesystem()
 # TODO: we may need more utility functions mapping
 # between "filespace" and "blockspace"
-blocktree = {}
+blocktree = load_blocktree()
 
 
 @Pyro5.api.expose
@@ -134,6 +151,8 @@ class FileServer:
                     "Using the new shards...")
         log(f"Registered shards {shards} for {block_name}.")
         blocktree[block_name] = shards
+        # TODO: use sqlite
+        persist_blocktree(blocktree)
 
     def lookup_shards(self, block_name):
         """ Lookup shards for a given block.
