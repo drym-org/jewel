@@ -1,40 +1,29 @@
 from .base import ShardedStorageScheme
 from ..striped import StripedStorageScheme
+from ..redundant import RedundantStorageScheme
 from ...sharding import register_shards, lookup_shards, download_shards, fuse_shards
 from ...file import write_file
 from ...block import make_block
 from io import BytesIO
+from itertools import chain
 
 
-class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
+class RedundantSharding(ShardedStorageScheme, StripedStorageScheme, RedundantStorageScheme):
     """
-    This scheme splits the original file into K pieces or "shards" before
-    storing them on N hosts. On its own, there is no redundancy entailed
-    here. The point of sharding is to gain the flexibility to customize aspects
-    of storage and retrieval, including the use of nontrivial error recovery
-    schemes and downloading strategies.
-
-    To store the file, we discover live peers, select N of them, shard the file
-    into K pieces, and distribute ("stripe") the K shards across the N peers.
-    To retrieve the file, we lookup the shards for the file (via the
-    fileserver), discover the peers hosting each shard, and download each shard
-    from its hosting peer. Finally, we reconstitute the file by concatenating
-    the shards, verifying the checksum with the fileserver, and then saving it.
-
-    Note that this isn't the simplest possible sharding scheme, since it does
-    use striping. We could have sharding and put all the shards on the same
-    host, but that would be exactly equivalent to simple hosting without
-    sharding.
+    This is identical to vanilla sharding except that it adds redundancy in
+    (i.e. duplicates) each shard a certain number of times.
     """
 
-    name = 'shard'
+    name = 'shardshard'
 
     _N = None
     _K = None
+    _M = None
 
-    def __init__(self, number_of_peers, number_of_shards):
+    def __init__(self, number_of_peers, number_of_shards, redundancy):
         self.number_of_peers = number_of_peers
         self.number_of_shards = number_of_shards
+        self.redundancy = redundancy
 
     @property
     def number_of_peers(self):
@@ -51,6 +40,14 @@ class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
     @number_of_shards.setter
     def number_of_shards(self, K):
         self._K = K
+
+    @property
+    def redundancy(self):
+        return self._M
+
+    @redundancy.setter
+    def redundancy(self, M):
+        self._M = M
 
     def shard(self, block) -> list:
         """ Divide the input file into non-overlapping blocks. """
@@ -71,12 +68,21 @@ class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
         register_shards(block, shards)
         return shards
 
+    def introduce_redundancy(self, blocks):
+        """ Add redundancy to the blocks (shards) to facilitate error
+        recovery. """
+        blocks = [[block] * self.redundancy
+                  for block in blocks]
+        blocks = list(chain(*blocks))  # flatten
+        return blocks
+
     def store(self, file):
         """ The main entry point to store a file using this scheme. """
         block, peer_uids = self.handshake_store(file)
 
         # ordered list of shards
         shards = self.shard(block)
+        shards = self.introduce_redundancy(shards)
         self.stripe(shards, peer_uids)
 
     def get(self, filename):

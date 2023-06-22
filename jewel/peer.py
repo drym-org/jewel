@@ -7,7 +7,7 @@ from .models import BlockMetadata, File, PeerMetadata
 from .checksum import compute_checksum
 from .names import unique_name
 from .log import log
-from .scheme import Hosting, NaiveDuplication, VanillaSharding
+from .scheme import Hosting, NaiveDuplication, VanillaSharding, RedundantSharding
 from .file import file_contents, write_file, dir, delete_file
 from .config import load_peer_config
 
@@ -20,7 +20,7 @@ NAME = unique_name(NAMESPACE, PWD)
 # so that all logs by this process show
 # where they're coming from
 os.environ["JEWEL_NODE_NAME"] = NAME
-SUPPORTED_SCHEMES = [Hosting, NaiveDuplication, VanillaSharding]
+SUPPORTED_SCHEMES = [Hosting, NaiveDuplication, VanillaSharding, RedundantSharding]
 
 
 def load_scheme(metadata):
@@ -28,8 +28,10 @@ def load_scheme(metadata):
         return Hosting()
     elif metadata.scheme == 'naive':
         return NaiveDuplication(metadata.n)
-    elif metadata.scheme == 'vanilla':
+    elif metadata.scheme == 'shard':
         return VanillaSharding(metadata.n, metadata.k)
+    elif metadata.scheme == 'shardshard':
+        return RedundantSharding(metadata.n, metadata.k, metadata.m)
 
 
 peer_metadata = load_peer_config()
@@ -57,8 +59,9 @@ class Peer:
         # an instance instead of a class in registering
         # with pyro. But seems unnecessary for now.
         global SCHEME
-        # NOTE: hardcoded number of peers to 2 and number of shards to 3!
-        peer_metadata = PeerMetadata(scheme, 2, 3)
+        # NOTE: hardcoded number of peers to 2,
+        # number of shards to 3, and redundancy at 3!
+        peer_metadata = PeerMetadata(scheme, 2, 3, 3)
         SCHEME = load_scheme(peer_metadata)
 
     def has_block(self, block_name):

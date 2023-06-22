@@ -1,3 +1,3 @@
-from .naive import NaiveDuplication
+from .naive import NaiveDuplication, RedundantStorageScheme
 
-__all__ = ("NaiveDuplication", )
+__all__ = ("NaiveDuplication", "RedundantStorageScheme")

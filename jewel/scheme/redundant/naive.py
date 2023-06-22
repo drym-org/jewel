@@ -24,9 +24,11 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
     name = 'naive'
 
     _N = None
+    _M = None
 
     def __init__(self, number_of_peers):
         self.number_of_peers = number_of_peers
+        self.redundancy = number_of_peers
 
     @property
     def number_of_peers(self):
@@ -36,14 +38,21 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
     def number_of_peers(self, N):
         self._N = N
 
+    @property
+    def redundancy(self):
+        return self._M
+
+    @redundancy.setter
+    def redundancy(self, M):
+        self._M = M
+
     def introduce_redundancy(self, blocks):
         """ Add redundancy to the blocks to facilitate error recovery. """
         # just repeat the block N times, where N
         # is the number of peers
         # we expect there to be exactly one block
         # with this scheme
-        block = blocks[0]
-        return [block for _i in range(self.number_of_peers)]
+        return blocks * self.redundancy
 
     def store(self, file):
         """ The main entry point to store a file using this scheme. """

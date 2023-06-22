@@ -1,6 +1,5 @@
 from collections import defaultdict
 from itertools import cycle
-from .networking import upload
 
 
 def round_robin_striping(peer_uids, blocks):

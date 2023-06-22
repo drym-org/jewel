@@ -12,7 +12,8 @@ def load_peer_config():
     scheme = next(csv.reader([preferences['scheme']]))[0]
     n = int(next(csv.reader([preferences['n']]))[0])
     k = int(next(csv.reader([preferences['k']]))[0])
-    return PeerMetadata(scheme, n, k)
+    m = int(next(csv.reader([preferences['m']]))[0])
+    return PeerMetadata(scheme, n, k, m)
 
 
 def main():

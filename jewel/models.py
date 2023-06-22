@@ -25,3 +25,4 @@ class PeerMetadata:
     scheme: str
     n: int
     k: int
+    m: int

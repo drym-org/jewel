@@ -1,5 +1,6 @@
 import Pyro5.api
 import os
+from itertools import cycle
 from collections import defaultdict
 from .networking import download_from_peer, hosting_peers
 from .checksum import compute_checksum
@@ -30,6 +31,33 @@ def lookup_shards(block_name):
         return shards
 
 
+def _prepare_download_itinerary(shards, peer_shards):
+    """
+    If the same shard is present on multiple peers, we want to select peers in
+    such a way that they are maximally, i.e. uniformly, utilized. To do this,
+    we let the peers "take turns" picking shards until all shards have been
+    chosen.
+    """
+    shards = shards.copy()
+    peer_shards = peer_shards.copy()
+    NAME = os.environ.get('JEWEL_NODE_NAME')
+    new_peer_shards = defaultdict(list)
+    for i, uid in enumerate(cycle(peer_shards.keys())):
+        if not shards:
+            break
+        if i > 100:
+            log(NAME, "Encountered infinite loop! Exiting...")
+        shards_remaining = peer_shards[uid]
+        while shards_remaining:
+            chosen_shard = shards_remaining.pop()
+            if chosen_shard in shards:
+                new_peer_shards[uid].append(chosen_shard)
+                shards.remove(chosen_shard)
+                break
+    log(NAME, f"Prepared download itinerary: {new_peer_shards}.")
+    return new_peer_shards
+
+
 def download_shards(shards):
     """ Given a list of shards (as block checksums, and presumed to be in
     order), download all of them from the network. """
@@ -38,6 +66,7 @@ def download_shards(shards):
         hosts = hosting_peers(block_name)
         for host_uid in hosts:
             peer_shards[host_uid].append(block_name)
+    peer_shards = _prepare_download_itinerary(shards, peer_shards)
     downloaded_shards = []
     for uid in peer_shards:
         downloaded_shards += download_from_peer(peer_shards[uid], uid)

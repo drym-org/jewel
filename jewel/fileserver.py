@@ -161,6 +161,7 @@ class FileServer:
         shards = blocktree.get(block_name)
         if not shards:
             log(f"Warning: No shards found for {block_name}.")
+        log(f"Found shards {shards} for {block_name}.")
         return shards
 
 
