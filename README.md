@@ -70,7 +70,7 @@ Besides these two modules, everything else is just supporting modules.
 
 ## The Interface
 
-The ``do.py`` module is the user interface to this whole thing. It uses a nifty library called ``simple-term-menu``, and the selected options appear in the code as indexes that we can use to take appropriate action. Remember to ``run.sh`` first so that the network is up.
+The ``jewel.py`` module is the user interface to this whole thing. It uses a nifty library called ``simple-term-menu``, and the selected options appear in the code as indexes that we can use to take appropriate action. Remember to ``run.sh`` first so that the network is up.
 
 ## Automation
 

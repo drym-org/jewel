@@ -1,3 +1,4 @@
+import os
 from random import sample
 from .vanilla import VanillaSharding
 from ..recovery import ErrorCorrectionScheme
@@ -7,6 +8,7 @@ from ...bytes import bytes_xor
 from ...models import Block
 from ...recovery import lookup_recovery_blocks, register_recovery_blocks
 from ...file import write_file
+from ...log import log
 
 
 class ParitySharding(VanillaSharding, ErrorCorrectionScheme):
@@ -29,6 +31,7 @@ class ParitySharding(VanillaSharding, ErrorCorrectionScheme):
         """ The input blocks here could be either regular blocks or error
         recovery blocks. This method is responsible for figuring out what
         they are and recover the original data blocks. """
+        NAME = os.environ.get('JEWEL_NODE_NAME')
         if len(blocks) < self.number_of_shards:
             raise Exception("Can't recover as more than one block is missing!")
         rblock_checksum = lookup_recovery_blocks(block_name)[0] # we expect exactly one recovery block
@@ -40,8 +43,10 @@ class ParitySharding(VanillaSharding, ErrorCorrectionScheme):
             regular_blocks = [b for b in blocks if not b.checksum == rblock_checksum]
             recovered_blocks = regular_blocks + [original_block]
             recovered_blocks.sort(key=lambda b: regular_block_checksums.index(b.checksum))
+            log(NAME, f"Recovered block {original_block.checksum} using parity block {rblock_checksum}.")
             return recovered_blocks
         else:
+            log(NAME, f"Original shards received, no recovery necessary.")
             blocks.sort(key=lambda b: regular_block_checksums.index(b.checksum))
             return blocks
 

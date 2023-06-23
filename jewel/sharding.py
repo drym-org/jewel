@@ -9,26 +9,31 @@ from .models import Block
 from .log import log
 from .block import make_block
 
+NULL_BYTE = b'\0'
+
 
 def create_shards(block, number_of_shards):
     """ Divide a block into a given number of non-overlapping contiguous
     blocks. """
     block_length = len(block.data)
-    # TODO: need to do some form of padding / unpadding
-    # to ensure the shards are all of the same size
     shard_length = int(block_length / number_of_shards)
-    shards = []
+    shard_data = []
     f = BytesIO(block.data)
     for i in range(number_of_shards - 1):
         # read data to create the first n-1 shards
         data = f.read(shard_length)
-        shard = make_block(data)
-        shards.append(shard)
+        shard_data.append(data)
     # create the final, n'th shard from
     # all of the remaining data
     data = f.read()
-    shard = make_block(data)
-    shards.append(shard)
+    last_block_length = len(data)
+    padding = last_block_length - shard_length
+    if padding > 0:
+        shard_data = [s + NULL_BYTE * padding for s in shard_data]
+    for d in shard_data:
+        assert len(d) == last_block_length
+    shard_data.append(data)
+    shards = [make_block(data) for data in shard_data]
     return shards
 
 
@@ -100,6 +105,8 @@ def download_shards(shards):
 
 def fuse_shards(shards):
     """ Merge contiguous shards to form a larger block. """
-    data = b''.join([s.data for s in shards])
+    # strip any null padding that may have been added
+    # before joining the shards
+    data = b''.join([s.data.strip(NULL_BYTE) for s in shards])
     checksum = compute_checksum(data)
     return Block(checksum, data)
