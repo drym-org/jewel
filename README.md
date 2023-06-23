@@ -50,6 +50,14 @@ You can inspect the files stored in each peer by looking in the ``disk`` folder 
 
 In addition to trace logs using using the project's ``log`` utility, adding ad hoc print statements is a reasonable way to debug things, and any such output would show up in the logging/``run`` window. I'm not sure if there is a way to use a debugger like ``pudb`` except via (currently non-existent) unit tests.
 
+You can also run scripts at any path within the repo by running it from the repo root via:
+
+``` shell
+$ python -m jewel.path.to.my.module
+```
+
+This ensures that the module will be able to use relative imports within the package namespace the same way as any other Jewel module.
+
 # The Code
 
 ## The Network

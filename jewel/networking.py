@@ -1,4 +1,3 @@
-from collections import defaultdict
 import Pyro5.api
 import os
 import base64

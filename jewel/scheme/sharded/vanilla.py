@@ -1,8 +1,6 @@
 from .base import ShardedStorageScheme
 from ..striped import StripedStorageScheme
-from ...sharding import register_shards
-from ...block import make_block
-from io import BytesIO
+from ...sharding import create_shards, register_shards
 
 
 class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
@@ -53,20 +51,7 @@ class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
 
     def shard(self, block) -> list:
         """ Divide the input file into non-overlapping blocks. """
-        block_length = len(block.data)
-        shard_length = int(block_length / self.number_of_shards)
-        shards = []
-        f = BytesIO(block.data)
-        for i in range(self.number_of_shards - 1):
-            # read data to create the first n-1 shards
-            data = f.read(shard_length)
-            shard = make_block(data)
-            shards.append(shard)
-        # create the final, n'th shard from
-        # all of the remaining data
-        data = f.read()
-        shard = make_block(data)
-        shards.append(shard)
+        shards = create_shards(block, self.number_of_shards)
         register_shards(block, shards)
         return shards
 

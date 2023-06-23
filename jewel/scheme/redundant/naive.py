@@ -60,11 +60,6 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
         blocks = [block]
         blocks = self.introduce_redundancy(blocks)
         self.stripe(blocks, peer_uids)
-        # TODO: store filename: root_block_checksum on FS
-        # TODO: store block checksum: [block_checksum]-or-peer_uid/name
-        # try to implement the block tree and file dir
-        # in a short feedback loop - in REPL for instance
-        # note two files with different names but the same contents would reuse
 
     def get(self, filename):
         """ The main entry point to get a file that was stored using this

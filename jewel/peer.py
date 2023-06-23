@@ -7,7 +7,7 @@ from .models import BlockMetadata, File, PeerMetadata
 from .checksum import compute_checksum
 from .names import unique_name
 from .log import log
-from .scheme import Hosting, NaiveDuplication, VanillaSharding, RedundantSharding
+from .scheme import Hosting, NaiveDuplication, VanillaSharding, RedundantSharding, ParitySharding
 from .file import file_contents, write_file, dir, delete_file
 from .config import load_peer_config
 
@@ -20,7 +20,7 @@ NAME = unique_name(NAMESPACE, PWD)
 # so that all logs by this process show
 # where they're coming from
 os.environ["JEWEL_NODE_NAME"] = NAME
-SUPPORTED_SCHEMES = [Hosting, NaiveDuplication, VanillaSharding, RedundantSharding]
+SUPPORTED_SCHEMES = [Hosting, NaiveDuplication, VanillaSharding, RedundantSharding, ParitySharding]
 
 
 def load_scheme(metadata):
@@ -32,6 +32,8 @@ def load_scheme(metadata):
         return VanillaSharding(metadata.n, metadata.k)
     elif metadata.scheme == 'shardshard':
         return RedundantSharding(metadata.n, metadata.k, metadata.m)
+    elif metadata.scheme == 'parity':
+        return ParitySharding(metadata.n, metadata.k)
 
 
 peer_metadata = load_peer_config()

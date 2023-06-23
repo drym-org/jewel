@@ -1,11 +1,35 @@
 import Pyro5.api
 import os
+from io import BytesIO
 from itertools import cycle
 from collections import defaultdict
 from .networking import download_from_peer, hosting_peers
 from .checksum import compute_checksum
 from .models import Block
 from .log import log
+from .block import make_block
+
+
+def create_shards(block, number_of_shards):
+    """ Divide a block into a given number of non-overlapping contiguous
+    blocks. """
+    block_length = len(block.data)
+    # TODO: need to do some form of padding / unpadding
+    # to ensure the shards are all of the same size
+    shard_length = int(block_length / number_of_shards)
+    shards = []
+    f = BytesIO(block.data)
+    for i in range(number_of_shards - 1):
+        # read data to create the first n-1 shards
+        data = f.read(shard_length)
+        shard = make_block(data)
+        shards.append(shard)
+    # create the final, n'th shard from
+    # all of the remaining data
+    data = f.read()
+    shard = make_block(data)
+    shards.append(shard)
+    return shards
 
 
 def register_shards(block, shards):
