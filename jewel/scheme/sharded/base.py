@@ -6,6 +6,12 @@ from ...file import write_file
 
 class ShardedStorageScheme(StorageScheme):
 
+    """ A storage scheme where a file is divided into shards and then
+    reconstituted from them.
+
+    Typically, these shards would be striped across many peers in the
+    network (see "striped" scheme)."""
+
     @property
     @abstractmethod
     def number_of_shards(self):

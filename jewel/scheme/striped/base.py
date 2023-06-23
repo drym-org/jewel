@@ -6,6 +6,10 @@ from ...networking import upload
 
 class StripedStorageScheme(StorageScheme):
 
+    """ A storage scheme that stores blocks across multiple peers.  This could
+    be entire files duplicated, or shards of a file distributed across the
+    peers. """
+
     @property
     @abstractmethod
     def number_of_peers(self):

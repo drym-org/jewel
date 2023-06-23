@@ -27,6 +27,7 @@ def create_shards(block, number_of_shards):
     # all of the remaining data
     data = f.read()
     last_block_length = len(data)
+    # pad shards with null bytes so they are all the same size
     padding = last_block_length - shard_length
     if padding > 0:
         shard_data = [s + NULL_BYTE * padding for s in shard_data]

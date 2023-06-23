@@ -17,8 +17,6 @@ def load_peer_config():
 
 
 def main():
-    # for this to work when run as a script (e.g. for testing), uncomment the
-    # use of the relative import, and just return the values
     print(load_peer_config())
 
 

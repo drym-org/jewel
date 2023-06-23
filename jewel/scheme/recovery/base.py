@@ -4,7 +4,9 @@ from ...models import Block
 
 class ErrorCorrectionScheme(ABC):
 
-    """ Typically, an error correction scheme will be defined on a set of
+    """ An error recovery scheme defined over a set of blocks.
+
+    Typically, an error correction scheme will be defined on a set of
     shards of a file, but as the implementation operates simply on a set of
     blocks rather than on something more specific like files or shards, we
     could use the same implementation across a group of multiple files. """

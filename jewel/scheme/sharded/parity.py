@@ -69,6 +69,13 @@ class ParitySharding(VanillaSharding, ErrorCorrectionScheme):
         shards = lookup_shards(block_name)  # checksums
         rblock = lookup_recovery_blocks(block_name)[0]
         all_shards = shards + [rblock]
+        # download any K shards, whether recovery or regular, since we can
+        # assume that recovering a regular shard from a recovery shard is a
+        # secondary concern (and a much lower cost) to getting the data
+        # efficiently from the network. So in practice, we would probably
+        # get a random selection of shards here (whichever happen to be the
+        # most expedient), and that's why we just randomly select shards from
+        # the full set
         shards = sample(all_shards, self.number_of_shards)
         shards = download_shards(shards)  # blocks
         shards = self.recover(block_name, shards)
