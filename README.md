@@ -60,9 +60,50 @@ This ensures that the module will be able to use relative imports within the pac
 
 # The Code
 
+``` shell
+jewel
+│
+├── block.py
+├── bytes.py
+├── checksum.py
+├── config.py
+├── file.py
+├── fileserver.py
+├── jewel.py
+├── log.py
+├── metadata.py
+├── models.py
+├── names.py
+├── networking.py
+├── peer.py
+├── recovery.py
+├── scheme
+│   ├── __init__.py
+│   ├── base.py
+│   ├── hosting.py
+│   ├── recovery
+│   │   ├── __init__.py
+│   │   └── base.py
+│   ├── redundant
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   └── naive.py
+│   ├── sharded
+│   │   ├── __init__.py
+│   │   ├── base.py
+│   │   ├── parity.py
+│   │   ├── redundant.py
+│   │   └── vanilla.py
+│   └── striped
+│       ├── __init__.py
+│       └── base.py
+├── sharding.py
+├── striping.py
+```
+
 ## The Network
 
-There are two main python modules -- ``peer.py`` and ``fileserver.py``. When deployed using ``init.sh``, these modules are placed in dedicated folders to model distinct nodes or machines on a network. These folders also each contain a ``disk`` subfolder that represents the node's hard drive.
+There are two main python modules -- ``peer.py`` and ``fileserver.py``. The former implements a peer on the network that may upload or download files, while the latter keeps track of files on the network. When deployed using ``init.sh``, these modules are placed in dedicated folders to model distinct nodes or machines on a network. These folders also each contain a ``disk`` subfolder that represents the node's hard drive.
 
 Both of these modules use Pyro5 to interact over the network. This library allows us to do simple method invocations on remote objects -- a really seamless RPC framework, basically.
 
@@ -71,6 +112,24 @@ Besides these two modules, everything else is just supporting modules.
 ## The Interface
 
 The ``jewel.py`` module is the user interface to this whole thing. It uses a nifty library called ``simple-term-menu``, and the selected options appear in the code as indexes that we can use to take appropriate action. Remember to ``run.sh`` first so that the network is up.
+
+## Storage schemes
+
+Storage schemes are defined in terms of a class hierarchy in the `schemes` folder and their usage contract is simply to provide ``store`` and ``get`` method implementations. The former method uploads the file to the network, and the latter downloads it -- *how* this is done is defined by the particular storage scheme used and is abstracted from the caller. Most concerns in a storage scheme, like striping, sharding, and error recovery, are reasonably well bounded and orthogonal to one another, so they are implemented as mixins in the class hierarchy.
+
+To implement a new scheme, simply subclass the mixins you need and implement their abstract methods to gain the relevant functionality.
+
+## The filesystem
+
+The filesystem's operations are in terms of *blocks* rather than files. The only time that filenames are employed is in interactions with peers who may only know the filename rather than the block name (and we assume for simplicity that filenames are unique on the network). A block may correspond to a file or even a shard of a file, or, in principle, even a stray fragment that is simply a contiguous byte range within a file. All of these are blocks.
+
+Blocks are identified by their contents, so that two files with different names but the same contents would correspond to the same block (this is similar to the concept of "blobs" in Git). The reason to use blocks is that the core operations of the filesystem may be uniformly and parsimoniously described in terms of blocks, so that "files" and "shards" are higher level concepts that are not relevant to these core operations of storage and recovery.
+
+The filesystem maintains three data structures (currently all residing on the fileserver):
+
+1. The *index*, which is a mapping of filenames to blocks.
+2. The *blocktree*, which is a mapping of blocks to other blocks that are its "shards." Root blocks in the block tree correspond to complete files, and shards may have shards themselves. There is a corresponding blocktree for error recovery blocks that may be associated with any block.
+3. The *block book*, which is a mapping of blocks to peers hosting them. Currently, this isn't implemented and we just poll all peers each time a block is requested.
 
 ## Automation
 
