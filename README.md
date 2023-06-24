@@ -117,7 +117,7 @@ The ``jewel.py`` module is the user interface to this whole thing. It uses a nif
 
 Storage schemes are defined in terms of a class hierarchy in the `schemes` folder and their usage contract is simply to provide ``store`` and ``get`` method implementations. The former method uploads the file to the network, and the latter downloads it -- *how* this is done is defined by the particular storage scheme used and is abstracted from the caller. Most concerns in a storage scheme, like striping, sharding, and error recovery, are reasonably well bounded and orthogonal to one another, so they are implemented as mixins in the class hierarchy.
 
-To implement a new scheme, simply subclass the mixins you need and implement their abstract methods to gain the relevant functionality.
+To implement a new scheme, simply subclass the mixins you need and implement their abstract methods to gain the relevant functionality, or add a new base class (e.g. subclassing python's abstract base class ``abc.ABC``) to add novel functionality.
 
 ## The filesystem
 
