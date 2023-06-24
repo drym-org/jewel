@@ -16,7 +16,7 @@ from .log import log
 # wrong CWD, this would be an added safeguard against
 # clobbering local files, so we retain it.
 DISK = 'disk'
-FILESYSTEM = 'filesystem.json'
+INDEX = 'index.json'
 BLOCKTREE = 'blocktree.json'
 RECOVERY_BLOCKTREE = 'recovery_blocktree.json'
 NAMESPACE = 'jewel.fileserver'
@@ -28,7 +28,7 @@ os.environ["JEWEL_NODE_NAME"] = NAME
 log = partial(log, NAME)
 
 # There are 3 main data structures on the fileserver:
-#  1. The filesystem, which is a mapping of filenames to blocks.
+#  1. The index, which is a mapping of filenames to blocks.
 #     Blocks are identified and named by their contents (via a checksum)
 #     so that two files with different names but the same contents
 #     would correspond to the same block.
@@ -49,8 +49,8 @@ def load_from_json_file(filename):
     return data
 
 
-def load_filesystem():
-    return load_from_json_file(FILESYSTEM)
+def load_index():
+    return load_from_json_file(INDEX)
 
 
 def load_blocktree():
@@ -67,8 +67,8 @@ def persist_to_json_file(data, filename):
         json.dump(data, f)
 
 
-def persist_filesystem(filesystem):
-    persist_to_json_file(filesystem, FILESYSTEM)
+def persist_index(index):
+    persist_to_json_file(index, INDEX)
 
 
 def persist_blocktree(blocktree):
@@ -79,7 +79,7 @@ def persist_recovery_blocktree(blocktree):
     persist_to_json_file(blocktree, RECOVERY_BLOCKTREE)
 
 
-filesystem = load_filesystem()
+index = load_index()
 # TODO: we may need more utility functions mapping
 # between "filespace" and "blockspace"
 blocktree = load_blocktree()
@@ -101,7 +101,7 @@ class FileServer:
 
         The filesystem internally only cares about blocks. """
         try:
-            return filesystem[filename]
+            return index[filename]
         except KeyError:
             log(f"Unknown file {filename}!")
 
@@ -114,9 +114,9 @@ class FileServer:
             # so we retain a mapping of it to its block name so that
             # clients may refer to it using the filename rather than the
             # block name
-            filesystem[m.name] = m.checksum
+            index[m.name] = m.checksum
             # TODO: use sqlite
-            persist_filesystem(filesystem)
+            persist_index(index)
         # find all registered peers
         # for now that's all this does. But
         # we could tailor the response to the
