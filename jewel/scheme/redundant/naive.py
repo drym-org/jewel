@@ -1,11 +1,8 @@
-import Pyro5.api
-import base64
 from random import choice
 from .base import RedundantStorageScheme
 from ..striped import StripedStorageScheme
-from ...block import make_block
-from ...metadata import make_metadata
 from ...file import write_file
+from ...models import Block
 from ...networking import download, hosting_peers
 
 
@@ -54,6 +51,12 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
         # with this scheme
         return blocks * self.redundancy
 
+    def recover(self, block_name, blocks: list[Block]) -> list[Block]:
+        """ Since this is simple duplication, we assume the blocks here are
+        just the single block we care about that corresponds to the stored
+        file, and return them as is. """
+        return blocks
+
     def store(self, file):
         """ The main entry point to store a file using this scheme. """
         block, peer_uids = self.handshake_store(file)
@@ -70,6 +73,9 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
         # "best" peer here instead of a random peer
         chosen_peer = choice(peers)
         block = download(block_name, chosen_peer)
+        # we don't need to call recover, but just
+        # for uniformity
+        block = self.recover(block_name, [block])[0]
         # write it with the original filename
         # instead of the block name
         write_file(filename, block.data)

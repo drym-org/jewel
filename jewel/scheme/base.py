@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from ..networking import block_name_for_file, hosting_peers, peers_available_to_host
+from ..networking import block_name_for_file, peers_available_to_host
 from ..block import make_block
 from ..metadata import make_metadata
 
@@ -23,7 +23,7 @@ class StorageScheme(ABC):
         fileserver.
         """
         block = make_block(file.data)
-        metadata = make_metadata(block, file.name)
+        metadata = make_metadata(block, name=file.name)
         peer_uids = peers_available_to_host(metadata)
         return block, peer_uids
 

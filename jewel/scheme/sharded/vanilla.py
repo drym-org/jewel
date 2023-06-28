@@ -1,6 +1,7 @@
 from .base import ShardedStorageScheme
 from ..striped import StripedStorageScheme
 from ...sharding import create_shards, register_shards
+from ...metadata import make_metadata
 
 
 class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
@@ -52,7 +53,8 @@ class VanillaSharding(ShardedStorageScheme, StripedStorageScheme):
     def shard(self, block) -> list:
         """ Divide the input file into non-overlapping blocks. """
         shards = create_shards(block, self.number_of_shards)
-        register_shards(block, shards)
+        shard_mds = [make_metadata(s) for s in shards]
+        register_shards(block, shard_mds)
         return shards
 
     def store(self, file):

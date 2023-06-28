@@ -38,15 +38,15 @@ def create_shards(block, number_of_shards):
     return shards
 
 
-def register_shards(block, shards):
+def register_shards(block, shard_mds):
     """ Tell the server about the shards for this file so that we it comes time
     to get it back from the network, the server will know what the pieces are
     (and consequently, where to find them). """
     NAME = os.environ.get('JEWEL_NODE_NAME')
     log(NAME, f"Registering shards for {block.checksum}...")
-    shard_names = [s.checksum for s in shards]
+    shard_mds = [s.__dict__ for s in shard_mds]
     with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
-        server.register_shards(block.checksum, shard_names)
+        server.register_shards(block.checksum, shard_mds)
 
 
 def lookup_shards(block_name):

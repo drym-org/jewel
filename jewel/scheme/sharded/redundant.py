@@ -3,6 +3,7 @@ from ..striped import StripedStorageScheme
 from ..redundant import RedundantStorageScheme
 from ...sharding import register_shards
 from ...block import make_block
+from ...metadata import make_metadata
 from io import BytesIO
 from itertools import chain
 
@@ -64,7 +65,8 @@ class RedundantSharding(ShardedStorageScheme, StripedStorageScheme, RedundantSto
         data = f.read()
         shard = make_block(data)
         shards.append(shard)
-        register_shards(block, shards)
+        shard_mds = [make_metadata(s) for s in shards]
+        register_shards(block, shard_mds)
         return shards
 
     def introduce_redundancy(self, blocks):

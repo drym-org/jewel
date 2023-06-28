@@ -77,6 +77,18 @@ def block_name_for_file(filename):
         return block_name
 
 
+def block_catalog_lookup(block_name):
+    """ Ask the server what it knows about this block. """
+    # TODO: maintain this info on the client
+    NAME = os.environ.get('JEWEL_NODE_NAME')
+    with Pyro5.api.Proxy("PYRONAME:jewel.fileserver") as server:
+        metadata = server.block_catalog_lookup(block_name)
+        metadata = BlockMetadata(**metadata)
+        if not metadata:
+            log(NAME, f"{block_name} has no catalog entry.")
+        return metadata
+
+
 def download(block_name, peer_uid) -> Block:
     """ Download a block from a peer. """
     with Pyro5.api.Proxy(peer_uid) as peer:
@@ -92,7 +104,7 @@ def upload(block, peer_uid, name=None):
     need to know anything about the storage scheme being employed or about
     sharding. It simply stores a "block" of data (which may happen to be a file
     or a shard at a higher level of abstraction) on some peer."""
-    metadata = make_metadata(block, name)
+    metadata = make_metadata(block, name=name)
     with Pyro5.api.Proxy(peer_uid) as peer:
         peer.store(metadata.__dict__, block.data)
 

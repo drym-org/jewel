@@ -6,6 +6,7 @@ class BlockMetadata:
     checksum: str
     name: str = None
     size: int = None
+    is_recovery: bool = False
 
 
 @dataclass

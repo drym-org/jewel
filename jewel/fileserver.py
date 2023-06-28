@@ -17,8 +17,8 @@ from .log import log
 # clobbering local files, so we retain it.
 DISK = 'disk'
 INDEX = 'index.json'
+CATALOG = 'catalog.json'
 BLOCKTREE = 'blocktree.json'
-RECOVERY_BLOCKTREE = 'recovery_blocktree.json'
 NAMESPACE = 'jewel.fileserver'
 NAME = unique_name(NAMESPACE, "")  # TODO: consistency
 # so that all logs by this process show
@@ -31,10 +31,11 @@ log = partial(log, NAME)
 #  1. The index, which is a mapping of filenames to blocks.
 #     Blocks are identified and named by their contents (via a checksum)
 #     so that two files with different names but the same contents
-#     would correspond to the same block.
+#     would correspond to the same block. There is also a corresponding
+#     block catalog that maps block names to block metadata including filenames
+#     and whether the block is a regular or a recovery block
 #  2. The blocktree, which is a mapping of blocks to other blocks
-#     that are its "shards." There is a corresponding blocktree
-#     for error recovery blocks associated with a block.
+#     that are its "shards."
 #  3. The block book, which is a mapping of blocks to peers
 #     hosting them. Currently, this isn't implemented and we
 #     just poll all peers each time a file is requested.
@@ -53,12 +54,12 @@ def load_index():
     return load_from_json_file(INDEX)
 
 
+def load_catalog():
+    return load_from_json_file(CATALOG)
+
+
 def load_blocktree():
     return load_from_json_file(BLOCKTREE)
-
-
-def load_recovery_blocktree():
-    return load_from_json_file(RECOVERY_BLOCKTREE)
 
 
 def persist_to_json_file(data, filename):
@@ -71,19 +72,19 @@ def persist_index(index):
     persist_to_json_file(index, INDEX)
 
 
+def persist_catalog(catalog):
+    persist_to_json_file(catalog, CATALOG)
+
+
 def persist_blocktree(blocktree):
     persist_to_json_file(blocktree, BLOCKTREE)
 
 
-def persist_recovery_blocktree(blocktree):
-    persist_to_json_file(blocktree, RECOVERY_BLOCKTREE)
-
-
 index = load_index()
+catalog = load_catalog()
 # TODO: we may need more utility functions mapping
 # between "filespace" and "blockspace"
 blocktree = load_blocktree()
-recovery_blocktree = load_recovery_blocktree()
 
 
 @Pyro5.api.expose
@@ -105,6 +106,15 @@ class FileServer:
         except KeyError:
             log(f"Unknown file {filename}!")
 
+    def block_catalog_lookup(self, block_name):
+        """ Look up a block in the block catalog. This contains information
+        like the checksum and whether the block is a regular block or a
+        recovery block. """
+        try:
+            return catalog[block_name]
+        except KeyError:
+            log(f"Unknown block {block_name}!")
+
     def peers_available_to_host(self, metadata):
         """ Identify all peers available to host a file that a client desires
         to store on the network. """
@@ -117,6 +127,9 @@ class FileServer:
             index[m.name] = m.checksum
             # TODO: use sqlite
             persist_index(index)
+        # record an entry for this block in the block catalog
+        catalog[m.checksum] = m.__dict__
+        persist_catalog(catalog)
         # find all registered peers
         # for now that's all this does. But
         # we could tailor the response to the
@@ -157,24 +170,32 @@ class FileServer:
         also, by consulting the block book (or simply polling peers), where to
         find them. """
         number_of_shards = len(shards)
+        shards = [BlockMetadata(**s) for s in shards]
         if number_of_shards == 0:
             log("Warning: there's no sense in registering _no_ shards for "
                 f"{block_name}, even though it isn't an error. Not recording "
                 "shards.")
             return
-        if len(shards) == 1 and shards[0] == block_name:
+        if len(shards) == 1 and shards[0].checksum == block_name:
             log(f"Error: {block_name} cannot be treated as a shard of itself!")
             return
 
+        shard_names = [s.checksum for s in shards]
         if block_name in blocktree:
             previous_shards = blocktree[block_name]
-            if previous_shards != shards:
+            if previous_shards != shard_names:
                 log("Warning: reported shards do not match existing shards. "
                     "Using the new shards...")
-        log(f"Registered shards {shards} for {block_name}.")
-        blocktree[block_name] = shards
+
+        # record an entry for this block in the block catalog
+        for shard in shards:
+            catalog[shard.checksum] = shard.__dict__
+        persist_catalog(catalog)
+        # add it to the block tree
+        blocktree[block_name] = shard_names
         # TODO: use sqlite
         persist_blocktree(blocktree)
+        log(f"Registered shards {shards} for {block_name}.")
 
     def lookup_shards(self, block_name):
         """ Lookup shards for a given block.
@@ -185,38 +206,6 @@ class FileServer:
             log(f"Warning: No shards found for {block_name}.")
         log(f"Found shards {shards} for {block_name}.")
         return shards
-
-    def register_recovery_blocks(self, block_name, rblocks):
-        """ Similar to register_shards but for special shards that are used in
-        error recovery. """
-        number_of_shards = len(rblocks)
-        if number_of_shards == 0:
-            log("Warning: there's no sense in registering _no_ recovery blocks "
-                f"for {block_name}, even though it isn't an error. Not "
-                "recording shards.")
-            return
-        if len(rblocks) == 1 and rblocks[0] == block_name:
-            log(f"Error: {block_name} cannot be treated as a recovery block for itself!")
-            return
-
-        if block_name in recovery_blocktree:
-            previous_shards = recovery_blocktree[block_name]
-            if previous_shards != rblocks:
-                log("Warning: reported recovery blocks do not match the existing ones. "
-                    "Using the new ones...")
-        log(f"Registered recovery blocks {rblocks} for {block_name}.")
-        recovery_blocktree[block_name] = rblocks
-        # TODO: use sqlite
-        persist_recovery_blocktree(recovery_blocktree)
-
-    def lookup_recovery_blocks(self, block_name):
-        """ Similar to lookup_shards but for special blocks that are used in
-        error recovery. """
-        rblocks = recovery_blocktree.get(block_name)
-        if not rblocks:
-            log(f"Warning: No recovery blocks found for {block_name}.")
-        log(f"Found recovery blocks {rblocks} for {block_name}.")
-        return rblocks
 
 
 def main():

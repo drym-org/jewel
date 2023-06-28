@@ -1,5 +1,6 @@
-from ..base import StorageScheme
 from abc import abstractmethod
+from ..base import StorageScheme
+from ...models import Block
 
 
 class RedundantStorageScheme(StorageScheme):
@@ -14,16 +15,14 @@ class RedundantStorageScheme(StorageScheme):
     For instance, we could have a scheme that adds error recovery shards
     where each shard is also duplicated. """
 
-    @property
-    @abstractmethod
-    def redundancy(self):
-        pass
-
-    # TODO: we do define this on a set of blocks, so maybe it should be merged
-    # with ErrorRecoveryScheme after all, and "redundancy" (above) would
-    # perhaps only make sense as a property of the naive duplication scheme
-    # rather than any redundancy scheme
     @abstractmethod
     def introduce_redundancy(self, blocks: list) -> list:
         """ Add redundancy to the blocks to facilitate error recovery. """
+        pass
+
+    @abstractmethod
+    def recover(self, block_name, blocks: list[Block]) -> list[Block]:
+        """ The input blocks here could be either regular blocks or error
+        recovery blocks. This method is responsible for figuring out what
+        they are and recover the original data blocks. """
         pass
