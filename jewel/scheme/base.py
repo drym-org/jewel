@@ -40,8 +40,7 @@ class StorageScheme(ABC):
         block_name = block_name_for_file(filename)
         if not block_name:
             raise FileNotFoundError
-        peers = hosting_peers(block_name)
-        return block_name, peers
+        return block_name
 
     @abstractmethod
     def store(self, filename, contents, peer_uids):

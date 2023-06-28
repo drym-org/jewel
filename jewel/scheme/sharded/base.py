@@ -25,9 +25,7 @@ class ShardedStorageScheme(StorageScheme):
     def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
-        # TODO: this handshake asks which peers have the file
-        # but we don't need to do that yet with sharding
-        block_name, _ = self.handshake_get(filename)
+        block_name = self.handshake_get(filename)
         shards = lookup_shards(block_name)  # checksums
         shards = download_shards(shards)  # blocks
         block = fuse_shards(shards)

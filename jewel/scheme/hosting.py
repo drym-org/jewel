@@ -1,7 +1,7 @@
 import os
 from random import choice
 from .base import StorageScheme
-from ..networking import upload, download
+from ..networking import upload, download, hosting_peers
 from ..file import write_file
 from ..log import log
 
@@ -27,7 +27,8 @@ class Hosting(StorageScheme):
         """ The main entry point to get a file that was stored using this
         scheme. """
         NAME = os.environ.get('JEWEL_NODE_NAME')
-        block_name, peers = self.handshake_get(filename)
+        block_name = self.handshake_get(filename)
+        peers = hosting_peers(block_name)
         if len(peers) > 1:
             log(NAME,
                 "Warning: Storage scheme is simple hosting "

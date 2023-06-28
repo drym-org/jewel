@@ -6,7 +6,7 @@ from ..striped import StripedStorageScheme
 from ...block import make_block
 from ...metadata import make_metadata
 from ...file import write_file
-from ...networking import download
+from ...networking import download, hosting_peers
 
 
 class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
@@ -64,7 +64,8 @@ class NaiveDuplication(RedundantStorageScheme, StripedStorageScheme):
     def get(self, filename):
         """ The main entry point to get a file that was stored using this
         scheme. """
-        block_name, peers = self.handshake_get(filename)
+        block_name = self.handshake_get(filename)
+        peers = hosting_peers(block_name)
         # TODO: when peer metadata is added, we can select the
         # "best" peer here instead of a random peer
         chosen_peer = choice(peers)
