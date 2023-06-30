@@ -1,40 +1,44 @@
 import Pyro5.api
 import os
+from sys import exit
 from io import BytesIO
 from itertools import cycle
 from collections import defaultdict
+from math import ceil
 from .networking import download_from_peer, hosting_peers
-from .checksum import compute_checksum
-from .models import Block
 from .log import log
-from .block import make_block
-
-NULL_BYTE = b'\0'
+from .bytes import pad, unpad, concat
 
 
-def create_shards(block, number_of_shards):
-    """ Divide a block into a given number of non-overlapping contiguous
-    blocks. """
-    block_length = len(block.data)
-    shard_length = int(block_length / number_of_shards)
-    shard_data = []
-    f = BytesIO(block.data)
-    for i in range(number_of_shards - 1):
-        # read data to create the first n-1 shards
+def create_shards_of_length(data, shard_length):
+    """ Divide some data (in the form of bytes) into shards of a specific
+    size. """
+    shards = []
+    f = BytesIO(data)
+    data = f.read(shard_length)
+    while data:
+        shards.append(data)
         data = f.read(shard_length)
-        shard_data.append(data)
-    # create the final, n'th shard from
-    # all of the remaining data
-    data = f.read()
-    last_block_length = len(data)
-    # pad shards with null bytes so they are all the same size
-    padding = last_block_length - shard_length
-    if padding > 0:
-        shard_data = [s + NULL_BYTE * padding for s in shard_data]
-    for d in shard_data:
-        assert len(d) == last_block_length
-    shard_data.append(data)
-    shards = [make_block(data) for data in shard_data]
+    # the final shard may be shorter than the others
+    # so we pad it to the desired shard length with null bytes
+    last_block = shards.pop()
+    padding = shard_length - len(last_block)
+    last_block = pad(last_block, padding)
+    shards.append(last_block)
+    for d in shards:
+        assert len(d) == shard_length
+    return shards
+
+
+def create_shards(data, number_of_shards):
+    """ Divide some data (in the form of bytes) into a given number of
+    non-overlapping contiguous bytestrings. """
+    block_length = len(data)
+    # we round up here since otherwise we'd have a final
+    # shard with almost no data and all padding, and it
+    # would be one more shard than we wanted
+    shard_length = ceil(block_length / number_of_shards)
+    shards = create_shards_of_length(data, shard_length)
     return shards
 
 
@@ -61,6 +65,12 @@ def lookup_shards(block_name):
         return shards
 
 
+def shard_index(shard, shards):
+    """ Given the full (ordered) list of shards and a block corresponding to a
+    shard, return the index of the shard. """
+    return shards.index(shard.checksum)
+
+
 def _prepare_download_itinerary(shards, peer_shards):
     """
     If the same shard is present on multiple peers, we want to select peers in
@@ -77,6 +87,7 @@ def _prepare_download_itinerary(shards, peer_shards):
             break
         if i > 100:
             log(NAME, "Encountered infinite loop! Exiting...")
+            exit(1)
         shards_remaining = peer_shards[uid]
         while shards_remaining:
             chosen_shard = shards_remaining.pop()
@@ -86,6 +97,21 @@ def _prepare_download_itinerary(shards, peer_shards):
                 break
     log(NAME, f"Prepared download itinerary: {new_peer_shards}.")
     return new_peer_shards
+
+
+def available_shards(block_name):
+    """ Find which shards are currently available for a given block.
+
+    Ideally we should return the hosts as well, so that we can download from
+    those peers on the next step instead of polling for hosts again in
+    download_shards. """
+    shard_checksums = lookup_shards(block_name)
+    available = []
+    for checksum in shard_checksums:
+        hosts = hosting_peers(checksum)
+        if hosts:
+            available.append(checksum)
+    return available
 
 
 def download_shards(shards):
@@ -104,10 +130,11 @@ def download_shards(shards):
     return downloaded_shards
 
 
-def fuse_shards(shards):
+def fuse_shards(shards, strip=True):
     """ Merge contiguous shards to form a larger block. """
     # strip any null padding that may have been added
     # before joining the shards
-    data = b''.join([s.data.strip(NULL_BYTE) for s in shards])
-    checksum = compute_checksum(data)
-    return Block(checksum, data)
+    if strip:
+        shards = [unpad(s) for s in shards]
+    data = concat(shards)
+    return data

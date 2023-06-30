@@ -2,6 +2,7 @@ from ..base import StorageScheme
 from abc import abstractmethod
 from ...sharding import lookup_shards, download_shards, fuse_shards
 from ...file import write_file
+from ...block import make_block
 
 
 class ShardedStorageScheme(StorageScheme):
@@ -28,7 +29,9 @@ class ShardedStorageScheme(StorageScheme):
         block_name = self.handshake_get(filename)
         shards = lookup_shards(block_name)  # checksums
         shards = download_shards(shards)  # blocks
-        block = fuse_shards(shards)
+        shard_data = [s.data for s in shards]
+        block_data = fuse_shards(shard_data)
+        block = make_block(block_data)
         assert block_name == block.checksum
         # write it with the original filename
         # instead of the block name
