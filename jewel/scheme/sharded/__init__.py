@@ -1,5 +1,4 @@
 from .vanilla import VanillaSharding
-from .redundant import RedundantSharding
-from .parity import ParitySharding
+from .redundant import NaiveRedundantSharding, ParitySharding
 
-__all__ = ("VanillaSharding", "RedundantSharding", "ParitySharding")
+__all__ = ("VanillaSharding", "NaiveRedundantSharding", "ParitySharding")

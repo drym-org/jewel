@@ -1,14 +1,13 @@
-from .base import ShardedStorageScheme
-from ..striped import StripedStorageScheme
-from ..redundant import RedundantStorageScheme
-from ...sharding import register_shards
-from ...block import make_block
-from ...metadata import make_metadata
+from .base import RedundantSharding
+from ....sharding import register_shards, lookup_shards
+from ....block import make_block
+from ....models import Block
+from ....metadata import make_metadata
 from io import BytesIO
-from itertools import chain
+from ....list import flatten
 
 
-class RedundantSharding(ShardedStorageScheme, StripedStorageScheme, RedundantStorageScheme):
+class NaiveRedundantSharding(RedundantSharding):
     """
     This is identical to vanilla sharding except that it adds redundancy in
     (i.e. duplicates) each shard a certain number of times.
@@ -74,11 +73,23 @@ class RedundantSharding(ShardedStorageScheme, StripedStorageScheme, RedundantSto
         recovery. """
         blocks = [[block] * self.redundancy
                   for block in blocks]
-        blocks = list(chain(*blocks))  # flatten
+        blocks = flatten(blocks)
+        return blocks
+
+    def recover(self, block_name, blocks: list[Block]) -> list[Block]:
+        """ Since this scheme simply duplicates shards, we expect the input
+        shards here to be the original shards themselves. We just ensure that
+        we have them all, and that they are in the right order. """
+        if len(blocks) < self.number_of_shards:
+            raise Exception("Can't recover as some blocks are missing!")
+        block_checksums = lookup_shards(block_name)
+        blocks.sort(key=lambda b: block_checksums.index(b.checksum))
         return blocks
 
     def store(self, file):
-        """ The main entry point to store a file using this scheme. """
+        """ Capturing the store behavior in the base class is a bit awkward at
+        the moment since the base class assumes the presence of recovery
+        shards, etc. So we just override the method here instead."""
         block, peer_uids = self.handshake_store(file)
 
         # ordered list of shards
