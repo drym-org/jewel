@@ -1,6 +1,6 @@
 from setuptools import setup
 
-requirements = ['Pyro5', 'simple-term-menu', 'click']
+requirements = ['Pyro5', 'simple-term-menu', 'click', 'reedsolo']
 
 test_requirements = [
     'pytest',

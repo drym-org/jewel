@@ -23,7 +23,6 @@ class RedundantSharding(ShardedStorageScheme, StripedStorageScheme, RedundantSto
         # ordered list of shards
         original_shards = self.shard(block)
         shards = self.introduce_redundancy(original_shards)
-        print(shards)
         regular_shards = [s for s in shards if s in original_shards]
         recovery_shards = [s for s in shards if s not in original_shards]
         regular_shard_mds = [make_metadata(s) for s in regular_shards]
@@ -50,6 +49,10 @@ class RedundantSharding(ShardedStorageScheme, StripedStorageScheme, RedundantSto
         # get a random selection of shards here (whichever happen to be the
         # most expedient), and that's why we just randomly select shards from
         # the full set
+        # TODO: this is no longer the right thing for RS encoding
+        # where we need minimum number instead. We could consider
+        # number of shards _as_ the minimum number, and use a different
+        # attribute on reedsolomon to hold the total number?
         shards = sample(shards, self.number_of_shards)
         shards = download_shards(shards)  # blocks
         shards = self.recover(block_name, shards)

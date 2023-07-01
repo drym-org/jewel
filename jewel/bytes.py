@@ -10,7 +10,7 @@ def bytes_xor(*bytestrings):
     return bytes([reduce(xor, bytes) for bytes in zip(*bytestrings)])
 
 
-def pad(data, num_bytes):
+def pad_bytes(data, num_bytes):
     return data + NULL_BYTE * num_bytes
 
 

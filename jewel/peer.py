@@ -7,7 +7,7 @@ from .models import BlockMetadata, File, PeerMetadata
 from .checksum import compute_checksum
 from .names import unique_name
 from .log import log
-from .scheme import Hosting, NaiveDuplication, VanillaSharding, RedundantSharding, ParitySharding
+from .scheme import Hosting, NaiveDuplication, VanillaSharding, NaiveRedundantSharding, ParitySharding, ReedSolomon
 from .file import file_contents, write_file, dir, delete_file
 from .config import load_peer_config
 
@@ -20,7 +20,7 @@ NAME = unique_name(NAMESPACE, PWD)
 # so that all logs by this process show
 # where they're coming from
 os.environ["JEWEL_NODE_NAME"] = NAME
-SUPPORTED_SCHEMES = [Hosting, NaiveDuplication, VanillaSharding, RedundantSharding, ParitySharding]
+SUPPORTED_SCHEMES = [Hosting, NaiveDuplication, VanillaSharding, NaiveRedundantSharding, ParitySharding, ReedSolomon]
 
 
 def load_scheme(metadata):
@@ -31,9 +31,11 @@ def load_scheme(metadata):
     elif metadata.scheme == 'shard':
         return VanillaSharding(metadata.n, metadata.k)
     elif metadata.scheme == 'shardshard':
-        return RedundantSharding(metadata.n, metadata.k, metadata.m)
+        return NaiveRedundantSharding(metadata.n, metadata.k, metadata.m)
     elif metadata.scheme == 'parity':
         return ParitySharding(metadata.n, metadata.k)
+    elif metadata.scheme == 'reedsolomon':
+        return ReedSolomon(metadata.n, metadata.k, metadata.j)
 
 
 peer_metadata = load_peer_config()
@@ -62,8 +64,9 @@ class Peer:
         # with pyro. But seems unnecessary for now.
         global SCHEME
         # NOTE: hardcoded number of peers to 2,
-        # number of shards to 3, and redundancy at 3!
-        peer_metadata = PeerMetadata(scheme, 2, 3, 3)
+        # number of shards to 5, redundancy to 3,
+        # and minimum number of (RS) jewels to 2!
+        peer_metadata = PeerMetadata(scheme, 2, 5, 3, 2)
         SCHEME = load_scheme(peer_metadata)
 
     def has_block(self, block_name):

@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from ..networking import block_name_for_file, peers_available_to_host
 from ..block import make_block
+from ..models import File
 from ..metadata import make_metadata
 
 
@@ -8,7 +9,7 @@ class StorageScheme(ABC):
 
     name = ''
 
-    def handshake_store(self, file):
+    def handshake_store(self, file: File):
         """ Create a block for the file we are interested in storing, and get a
         list of peers available to host it.
 

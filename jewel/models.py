@@ -27,3 +27,4 @@ class PeerMetadata:
     n: int
     k: int
     m: int
+    j: int
