@@ -16,7 +16,7 @@ First, ensure that you are at the root path of the cloned ``jewel`` repo.
 $ ./init.sh [N]
 ```
 
-This initializes the network (the fileserver and peers) by copying all of the necessary files to the ``live`` folder, overwriting any local changes. The argument ``N`` indicates how many peers you want.
+This initializes the network (the fileserver and peers) by copying all of the necessary files to the ``live`` folder, overwriting any local changes. The argument ``N`` indicates how many peers you want. ``5`` is a good number for testing nontrivial functionality without it being too hard to keep track of.
 
 Now spin up your network:
 
@@ -24,7 +24,7 @@ Now spin up your network:
 $ ./run.sh [N]
 ```
 
-This starts the nameserver, fileserver and peers. The ``N`` argument indicates how many of the peers you'd like to spin up.
+This starts the nameserver, fileserver and peers. The ``N`` argument indicates how many of the peers you'd like to spin up. Typically, you'd spin up all of the peers you created, e.g. ``5``.
 
 ## In another terminal window
 
@@ -134,6 +134,26 @@ The filesystem maintains three data structures (currently all residing on the fi
 ## Automation
 
 Spinning up a network in various configurations would be time-consuming and error prone, so we use bash scripts to do it. Specifically, ``init.sh`` creates the network in the ``live`` directory by simply copying over files into distinct folders representing nodes or machines, and ``run.sh`` spins everything up once deployed.
+
+# Concepts
+
+## "Jewels"
+
+This proof-of-concept is primarily intended to demonstrate the concept of "jewels" and how they may be used to gain a simple and tractable customization "knob" on the storage scheme in order to fulfill changing needs of availability and throughput.
+
+A jewel is any piece of data that is functionally identical to any other jewel with regard to reconstructing your original data, so that the only thing that matters is _how many_ of them you have, not which ones. To be clear, this doesn't mean that the jewels are indistinguishable from one another (e.g. like electrons) -- just that they are substitutable for one another. Each jewel reflects the whole and every other jewel, like in Indra's Net (hence the name).
+
+## The construction of jewels
+
+Jewels are currently implemented using Reed-Solomon encoding, but it's more the idea that is important, and it's possible that other encoding schemes can achieve the same goals.
+
+Reed-Solomon codes encode data in _blocks_ of a certain size (e.g. 256 bytes -- and note these "blocks" are unrelated to the concept of block as described elsewhere in this project). These blocks are typically much smaller than the data we wish to encode, so for data of arbitrary size, it is typically "chunked" and encoded independently into blocks.
+
+For a large file, we'd like to store it in smaller "shards" across many machines, but if these shards are larger than the RS block size and if even one of them is missing, then entire blocks will be missing and there is no way to recover them even if we have all of the other shards and even if we employ high redundancy in our encoding, since there is no recovery information present at a higher level than individual blocks.
+
+To get around this, we could either invent a higher-level encoding scheme that operates across blocks or across shards, or we could store the blocks in a special way so that entire blocks cannot go missing. This latter approach is what we follow here.
+
+Specifically, once the file is encoded, instead of dividing the entire resulting file into K shards, we divide _each block within that file_ into K shards and then concatenate these shards by position to obtain our final shards, or jewels. That is, jewels are composed of the shards of each block by index, and there are as many jewels as there are shards. If K=3, then there will be three shards of each block, and three corresponding jewels made up of the first shards, the second shards, and the third shards.
 
 # Supporting this Project
 
