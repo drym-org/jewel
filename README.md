@@ -62,7 +62,6 @@ This ensures that the module will be able to use relative imports within the pac
 
 ``` shell
 jewel
-│
 ├── block.py
 ├── bytes.py
 ├── checksum.py
@@ -70,20 +69,17 @@ jewel
 ├── file.py
 ├── fileserver.py
 ├── jewel.py
+├── list.py
 ├── log.py
 ├── metadata.py
 ├── models.py
 ├── names.py
 ├── networking.py
 ├── peer.py
-├── recovery.py
 ├── scheme
 │   ├── __init__.py
 │   ├── base.py
 │   ├── hosting.py
-│   ├── recovery
-│   │   ├── __init__.py
-│   │   └── base.py
 │   ├── redundant
 │   │   ├── __init__.py
 │   │   ├── base.py
@@ -91,8 +87,12 @@ jewel
 │   ├── sharded
 │   │   ├── __init__.py
 │   │   ├── base.py
-│   │   ├── parity.py
-│   │   ├── redundant.py
+│   │   ├── redundant
+│   │   │   ├── __init__.py
+│   │   │   ├── base.py
+│   │   │   ├── parity.py
+│   │   │   ├── reedsolomon.py
+│   │   │   └── shardshard.py
 │   │   └── vanilla.py
 │   └── striped
 │       ├── __init__.py
