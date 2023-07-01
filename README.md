@@ -62,6 +62,7 @@ This ensures that the module will be able to use relative imports within the pac
 
 ``` shell
 jewel
+│
 ├── block.py
 ├── bytes.py
 ├── checksum.py
