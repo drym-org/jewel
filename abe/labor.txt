@@ -1,0 +1,12 @@
+[Sid] The concept was described.
+[Sid] The proof-of-concept application was designed.
+[Vikram] The approach of handling shards and files uniformly as blocks was suggested.
+[Aditya] An RPC library was suggested as a good way to implement the proof of concept.
+[Aditya] A library providing Reed-Solomon encoding was suggested.
+[Sid] The testbed (the network and peer environment and automation scripts) was written.
+[Sid] A simple hosting storage scheme was implemented.
+[Sid] A naive duplication storage scheme was implemented.
+[Sid] A sharded storage scheme was implemented.
+[Sid] A parity storage scheme was implemented.
+[Ariana, Jair, Sid] A Reed-Solomon encoding based storage scheme was implemented.
+[Sid] Basic documentation was written.
