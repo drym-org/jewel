@@ -7,10 +7,10 @@ from collections import defaultdict
 from math import ceil
 from .networking import download_from_peer, hosting_peers
 from .log import log
-from .bytes import pad, unpad, concat
+from .bytes import pad_bytes, unpad, concat
 
 
-def create_shards_of_length(data, shard_length):
+def create_shards_of_length(data, shard_length, pad=True):
     """ Divide some data (in the form of bytes) into shards of a specific
     size. """
     shards = []
@@ -21,16 +21,17 @@ def create_shards_of_length(data, shard_length):
         data = f.read(shard_length)
     # the final shard may be shorter than the others
     # so we pad it to the desired shard length with null bytes
-    last_block = shards.pop()
-    padding = shard_length - len(last_block)
-    last_block = pad(last_block, padding)
-    shards.append(last_block)
-    for d in shards:
-        assert len(d) == shard_length
+    if pad:
+        last_block = shards.pop()
+        padding = shard_length - len(last_block)
+        last_block = pad_bytes(last_block, padding)
+        shards.append(last_block)
+        for d in shards:
+            assert len(d) == shard_length
     return shards
 
 
-def create_shards(data, number_of_shards):
+def create_shards(data, number_of_shards, pad=True):
     """ Divide some data (in the form of bytes) into a given number of
     non-overlapping contiguous bytestrings. """
     block_length = len(data)
@@ -38,7 +39,7 @@ def create_shards(data, number_of_shards):
     # shard with almost no data and all padding, and it
     # would be one more shard than we wanted
     shard_length = ceil(block_length / number_of_shards)
-    shards = create_shards_of_length(data, shard_length)
+    shards = create_shards_of_length(data, shard_length, pad)
     return shards
 
 

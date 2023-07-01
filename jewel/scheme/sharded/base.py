@@ -1,8 +1,9 @@
 from ..base import StorageScheme
 from abc import abstractmethod
-from ...sharding import lookup_shards, download_shards, fuse_shards
+from ...sharding import lookup_shards, download_shards, fuse_shards, create_shards, register_shards
 from ...file import write_file
 from ...block import make_block
+from ...metadata import make_metadata
 
 
 class ShardedStorageScheme(StorageScheme):
@@ -18,10 +19,15 @@ class ShardedStorageScheme(StorageScheme):
     def number_of_shards(self):
         pass
 
-    @abstractmethod
     def shard(self, block) -> list:
         """ Divide the input file into non-overlapping blocks. """
-        pass
+        shards = create_shards(block.data, self.number_of_shards)
+        shards = [make_block(s) for s in shards]
+        # could potentially provide a size as an override instead of
+        # computing it independently for each shard
+        shard_mds = [make_metadata(s) for s in shards]
+        register_shards(block, shard_mds)
+        return shards
 
     def get(self, filename):
         """ The main entry point to get a file that was stored using this
