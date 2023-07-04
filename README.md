@@ -126,11 +126,12 @@ The filesystem's operations are in terms of *blocks* rather than files. The only
 
 Blocks are identified by their contents, so that two files with different names but the same contents would correspond to the same block (this is similar to the concept of "blobs" in Git). The reason to use blocks is that the core operations of the filesystem may be uniformly and parsimoniously described in terms of blocks, so that "files" and "shards" are higher level concepts that are not relevant to these core operations of storage and recovery.
 
-The filesystem maintains three data structures (currently all residing on the fileserver):
+The filesystem maintains four data structures (currently all residing on the fileserver):
 
-1. The *index*, which is a mapping of filenames to blocks.
-2. The *blocktree*, which is a mapping of blocks to other blocks that are its "shards." Root blocks in the block tree correspond to complete files, and shards may have shards themselves. There is a corresponding blocktree for error recovery blocks that may be associated with any block.
-3. The *block book*, which is a mapping of blocks to peers hosting them. Currently, this isn't implemented and we just poll all peers each time a block is requested.
+1. The *index*, which maps a filename to the corresponding whole block.
+2. The *blocktree*, which maps a block to other blocks that are its "shards." Root blocks in the block tree correspond to complete files, and shards may have shards themselves.
+3. The *block catalog*, which is the opposite of the block tree, mapping blocks to other blocks that they are a part of.
+4. The *block book*, which is a mapping of blocks to peers hosting them. Currently, this isn't implemented and we just poll all peers each time a block is requested.
 
 ## Automation
 
