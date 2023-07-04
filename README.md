@@ -157,6 +157,40 @@ To get around this, we could either invent a higher-level encoding scheme that o
 
 Specifically, once the file is encoded, instead of dividing the entire resulting file into K shards, we divide _each block within that file_ into K shards and then concatenate these shards by position to obtain our final shards, or jewels. That is, jewels are composed of the shards of each block by index, and there are as many jewels as there are shards. If K=3, then there will be three shards of each block, and three corresponding jewels made up of the first shards, the second shards, and the third shards.
 
+# Motivation
+
+**Problem**: How can we store data on a peer-to-peer network so that you can reliably access it from anywhere at any time while minimizing the amount of storage used as well as the time taken to retrieve it?
+
+**Solution A (naive duplication)**: store a copy of the file on N peers. Then, as long as at least 1 peer is available, you can get your file.
+
+The way to make this solution more reliable is to increase N, and we can get arbitrarily close to 100% availability. The cost is high redundancy. If we define a redundancy factor D as the amount of data stored compared to the original size of the data, then for this solution, D = N.
+
+**Solution B (naive sharding)**: divide the file into K shards and store them, as before, across N peers. Individual peers may have more than one shard, but not necessarily the entire file. As a result, with this scheme, we'd need at least M peers to be online in order to get our data.
+
+The main value of this solution is _decoupling_. It decouples N, D, and M, giving us the flexibility to tune these to our liking (even, possibly, learn or dynamically tune the values in response to network health). In particular, this reduces to solution A in a boundary case where we store the full set of shards on each peer.
+
+As an example, say we'd like to store a file across 3 peers, so N=3. In solution A, this means that D=3 as well, i.e. we are storing 3x as much data as the size of the file.
+
+For solution B, if we divide the file into 3 shards and then stripe them across the 3 peers as [1,2,3],[1,2,3],[1,2,3], then this is identical to solution A. But we could also stripe the shards as [1,2],[2,3],[3,1], and in this case, D=2 (since we have two copies of every shard), and we need at least 2 peers to be online to get our file.
+
+The point is, this solution decouples things. It opens up new possibilities, as exemplified by the remaining solutions.
+
+**Solution C (sharding with parity)**: Same as solution B, but in addition to the M shards, we also create an extra "parity" shard which is the XOR of all of the M shards. This is similar to one of the options used by RAID arrays, where one of the many identically-sized disks in the array is designated as the parity disk. The purpose of this parity shard is to be able to reconstruct any of the other shards if one happens to be unavailable. This is done by simply XOR'ing all of the available M-1 shards together with the parity shard -- the result is the missing M'th shard.
+
+This solution improves on B since, ordinarily, if we wanted extra redundancy, we'd need to duplicate all shards at least one extra time, otherwise any shards that have fewer copies than other shards would be "weak links" in the system. The parity approach allows us to create a single extra shard that gives us extra redundancy in _any_ shard.
+
+The problem is, we can only afford to lose one shard -- either one of the original M shards, or the parity shard. If more than one distinct shard is unavailable, then this solution cannot recover.
+
+**Solution D ("Jewels," or sharding with Reed-Solomon encoding)**: Once again, similar to Solution B, but here, we first encode the data using Reed-Solomon encoding and then store the resulting encoded data (rather than the original data) in specially constructed shards called "jewels." First, a bit about Reed-Solomon codes.
+
+Reed-Solomon is the encoding used in storing data on CDs (among other things), which is why they can still work even after being badly scratched -- it's not that the scratches don't always destroy data, but that the encoding is able to recover the original data even though some of it is lost. The general idea of Reed-Solomon is that for any N numbers, there is a unique polynomial of order N-1 that takes on those values at positions 1,2,3, ..., N. Once we determine this polynomial, we can compute any number of extra values on this curve and store those as "recovery" numbers. If any of the original numbers are lost, as long as you still have at least N numbers, you can compute the polynomial and then get the original values at positions 1 through N back. There are some practical nuances to the implementation, for instance the use of a Galois Field instead of the usual set of integers, but this is the general idea. In this way, Reed Solomon decoding recovers _the larger pattern_ (the polynomial), of which your original data is a part. [This video](https://www.youtube.com/watch?v=1pQJkt7-R4Q "What are Reed-Solomon codes?") is a good overview of the ideas involved.
+
+Now, due to certain practical matters (see the discussion of "jewels" under "Concepts"), we can't naively shard the encoded data the way we do for the unencoded data. By constructing the "jewels" so that they are made up of pieces of encoded data in just the right way, we ensure that every jewel equally reflects the overall pattern and can be used to reconstruct it.
+
+The nice thing about this solution is that the jewels are all equivalent to one another for the purposes of recovering our data, giving us maximum flexibility in tuning and balancing redundancy with availability. For instance, if we would naively have had 5 shards without encoding, then if we create 10 jewels, we can lose any 5 of them and still recover the original data. We could gain differentially higher availability for a minimum cost in redundancy by simply increasing the number of jewels by one, instead of in batches at a high cost in redundancy as we would need to with naive shards. As these jewels are simply blocks from the perspective of the filesystem, just like shards, they can be distributed across the peers using any appropriate scheme for distributing shards, such as one that we might use in solution B.
+
+Finally, any of the solutions can benefit from the introduction of the concept of a ["fragment"](https://github.com/drym-org/jewel/issues/1) at the filesystem level, which would allow for partial and parallel downloads.
+
 # Supporting this Project
 
 Please make any financial contributions in one of the following ways:
