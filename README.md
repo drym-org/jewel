@@ -149,7 +149,7 @@ A jewel is any piece of data that is functionally identical to any other jewel w
 
 Jewels are currently implemented using Reed-Solomon encoding, but it's more the idea that is important, and it's possible that other encoding schemes can achieve the same goals.
 
-Reed-Solomon codes encode data in _blocks_ of a certain size (e.g. 256 bytes -- and note these "blocks" are unrelated to the concept of block as described elsewhere in this project). These blocks are typically much smaller than the data we wish to encode, so for data of arbitrary size, it is typically "chunked" and encoded independently into blocks.
+Reed-Solomon codes encode data in _blocks_ of a certain size (e.g. 255 bytes -- and note these "blocks" are unrelated to the concept of block as described elsewhere in this project). These blocks are typically much smaller than the data we wish to encode, so for data of arbitrary size, it is typically "chunked" and encoded independently into blocks.
 
 For a large file, we'd like to store it in smaller "shards" across many machines, but if these shards are larger than the RS block size and if even one of them is missing, then entire blocks will be missing and there is no way to recover them even if we have all of the other shards and even if we employ high redundancy in our encoding, since there is no recovery information present at a higher level than individual blocks.
 
