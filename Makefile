@@ -8,6 +8,7 @@ UNIT_TESTS_PATH = tests/unit
 help:
 	@echo "clean - remove all build, test, coverage and Python artifacts"
 	@echo "install - install package and dependencies globally but from the local path"
+	@echo "remove - uninstall package"
 	@echo "build - install package and dependencies for local development"
 	@echo "clean - clean all build and test artifacts"
 	@echo "clean-build - remove build artifacts"
@@ -37,6 +38,9 @@ help:
 
 install:
 	pip install -e .
+
+remove:
+	pip uninstall $(PACKAGE-NAME)
 
 build:
 	pip install -e .[dev]
