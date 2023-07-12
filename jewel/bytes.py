@@ -11,7 +11,7 @@ def bytes_xor(*bytestrings):
 
 
 def pad_bytes(data, num_bytes):
-    return data + NULL_BYTE * num_bytes
+    return data + null_bytes(num_bytes)
 
 
 def unpad(data):
