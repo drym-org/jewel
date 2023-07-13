@@ -13,6 +13,9 @@ def chunks(it, size):
 
 
 def tessellate(shards):
+    """ This is just a matrix transpose, if we consider that the shards, as a
+    2d array (list of lists), form a matrix. As transpose, this operation is
+    its own inverse. """
     num_shards = len(shards)
     repetition_length = len(shards[0])
     shards = flatten(shards)
