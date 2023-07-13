@@ -143,7 +143,9 @@ Spinning up a network in various configurations would be time-consuming and erro
 
 This proof-of-concept is primarily intended to demonstrate the concept of "jewels" and how they may be used to gain a simple and tractable customization "knob" on the storage scheme in order to fulfill changing needs of availability and throughput.
 
-A jewel is any piece of data that is functionally identical to any other jewel with regard to reconstructing your original data, so that the only thing that matters is _how many_ of them you have, not which ones. To be clear, this doesn't mean that the jewels are indistinguishable from one another (e.g. like electrons) -- just that they are substitutable for one another. Each jewel reflects the whole and every other jewel, like in Indra's Net (hence the name).
+A jewel is any piece of data that is functionally equivalent to any other jewel with regard to reconstructing your original data, so that the only thing that matters is _how many_ of them you have, not which ones. To be clear, this doesn't mean that the jewels are indistinguishable from one another (e.g. like electrons) -- just that they are substitutable for one another when collected together. Each jewel reflects the whole and every other jewel, like in Indra's Net (hence the name).
+
+More precisely, any subset of the full set of jewels is equivalent to any other subset of the same size.
 
 ## The construction of jewels
 
